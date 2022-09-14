@@ -1,0 +1,127 @@
+import math
+import matplotlib.pyplot as plt
+import networkx as nx
+import random
+import time
+import itertools
+import numpy as np
+
+#def CER(n, p):
+
+def bad_ER(n, p):
+    E = []
+    for i in numpy_combinations(np.arange(n)):
+        a = random.random()
+        if a < p:
+            E.append(i)
+
+    G = nx.empty_graph(n,create_using=nx.DiGraph())
+    G.add_edges_from(E)
+
+    return G
+
+def Optimized_ER(n, p):
+    V = set([v for v in range(n)])
+    E = set()
+    for combination in itertools.combinations(V, 2):
+        a = random.random()
+        if a < p:
+            E.add(combination)
+
+    g = nx.DiGraph() # Create directed graph
+    g.add_nodes_from(V)
+    g.add_edges_from(E)
+
+    return g
+
+def PreZER(V, p, m):
+    """PreZER
+    E: maximum number of edges
+    p: inclusion probability
+    m:  number of pre-computations;
+    """
+    # Initiate an empty graph with V nodes
+    G = nx.empty_graph(V,create_using=nx.DiGraph())
+    E = numpy_combinations(np.arange(V))
+
+    k = -1
+
+    # Compute the cumulative probability F(i);
+    #F = []
+    #for i in range(m+1):
+     #   F.append(1 - pow(1-p,i+1))
+    F = np.array([(1 - pow(1-p,x+1)) for x in range(m+1)])
+    print(F)
+    i = -1
+    while i < len(E):
+        a = random.random()
+        #j = 0
+        k = next((x for x in len(F) if F[x] > a), math.floor(math.log(1-a,1-p)-1))
+        #while j <= m:
+         #   if F[j] > a:
+          #      k = j
+           #     break
+            #j += 1
+        #if j == m+1:
+         #   k = math.floor(math.log(1-a,1-p)-1)
+        i = i+k+1
+        if i >= len(E):
+            break
+        G.add_edge(E[i][0], E[i][1])
+    return G
+
+def PPreZER(E, p, m, lambda_):
+    """PPreZER
+    E: maximum number of edges
+    p: inclusion probability
+    m:  number of pre-computations;
+    lambda_: parameter of the block size
+    """
+    # Initiate an empty graph
+    G=nx.empty_graph(0,create_using=nx.DiGraph())
+
+    # Compute the cumulative probability F(i);
+    F = []
+    for i in range(m+1):
+        F[i] = 1 - pow(1-p, i+1)
+    
+    L = 0
+    sigma = math.sqrt(p*(1-p)*E)
+    B = p*E + lambda_*sigma
+    while L < E:
+        R = []
+        for i in range(B):
+            R.append(random.random())
+        S = []
+
+    return 0
+
+def numpy_combinations(x):
+   
+    idx = np.stack(np.triu_indices(len(x), k=1), axis=-1)
+
+    return x[idx]
+
+V = 10
+p = 0.2
+x = math.log(0.000000001,10)/math.log(1-p,10)-1
+m = math.ceil(x)
+print(x)
+start_time = time.time()
+G= PreZER(V, p, m)
+print("--- %s seconds for generating a graph ---" % (time.time() - start_time))
+
+#start_time = time.time()
+#G = bad_ER(V, p)
+#print("--- %s seconds for generating a graph ---" % (time.time() - start_time))
+
+start_time = time.time()
+G = Optimized_ER(V, p)
+print("--- %s seconds for generating a graph ---" % (time.time() - start_time))
+
+"""
+pos = nx.spring_layout(G)
+nx.draw_networkx(G, pos)
+plt.title("Random Graph Generation Example")
+plt.show()
+"""
