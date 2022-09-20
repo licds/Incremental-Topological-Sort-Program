@@ -1,3 +1,18 @@
+import math
+import matplotlib.pyplot as plt
+import networkx as nx
+import random
+import time
+import itertools
+import numpy as np
+
+class Node(object):
+    data = None
+    a = list()
+    d = list()
+    def __init__(self, d):
+	    self.data = d
+
 # Following function from https://compucademy.net/generating-random-graphs-in-python/
 # Runtime O(n^2)
 def ER(n, p):
@@ -5,7 +20,7 @@ def ER(n, p):
     n: number of vertices
     p: inclusion probability
     """
-    V = set([v for v in range(n)])
+    V = set([Node(v) for v in range(n)])
     
     # Create a list of E possible edges
     E = set()
@@ -19,13 +34,6 @@ def ER(n, p):
     G.add_nodes_from(V)
     G.add_edges_from(E)
     return G
-import math
-import matplotlib.pyplot as plt
-import networkx as nx
-import random
-import time
-import itertools
-import numpy as np
 
 # Following functio from Pseudo-code https://openproceedings.org/2011/conf/edbt/NobariLKB11.pdf
 # Runtime O(n^2)

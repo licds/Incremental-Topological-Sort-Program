@@ -1,40 +1,46 @@
+from randomDAGGeneration import ER
 import math
 import matplotlib.pyplot as plt
 import networkx as nx
 import random
 import time
-import itertools
 import numpy as np
-from randomDAGGeneration import ER
+
 
 # Accelerate runtime through taichi
 #ti.init(arch=ti.gpu)
 
-# Partitioning function, Runtime O(n)
-def partition(n, partition_p):
+# Sampling function, Runtime O(n)
+def sample(n, sample_p):
     P = []
     for node in range(n):
         a = random.random()
-        if a < partition_p:
+        if a < sample_p:
             P.append(node)
     return P
 
-def labeling(G, P):
-    A = dict()
-    D = dict()
-    #N = dict()
-    for node in P:
-        A[node] = nx.ancestors(G, node)
-        D[node] = nx.descendants(G, node)
-        #N[node] = set(G.nodes) - (A[node] | D[node])
-    return A, D
+def labeling(G):
+    for node in G.nodes:
+        node.a = list(nx.ancestors(G, node))
+        node.a.append(node)
+        for i in range(len(node.a)):
+            node.a[i] = node.a[i].data
+        node.d = list(nx.descendants(G, node))
+        node.d.append(node)
+        for j in range(len(node.d)):
+            node.d[j] = node.d[j].data
+    return 
+
+def partition(S, G):
+    for node in G.nodes:
+        if P 
 
 # Number of nodes and probability for edges, INPUT HERE #################################
 n = 10
 p = 0.2
 
-# Probability for partition
-partition_p = math.log(n)/n
+# Probability for sampling
+sample_p = math.log(n)/n
 
 
 # Calculate size of m based on p
@@ -46,16 +52,22 @@ G = ER(n, p)
 print("--- %s seconds for generating a graph using ER ---" % (time.time() - start_time))
 
 start_time = time.time()
-P = partition(n, partition_p)
-print("--- %s seconds for partitioning a graph ---" % (time.time() - start_time))
+P = sample(n, sample_p)
+print("--- %s seconds for sampling a graph ---" % (time.time() - start_time))
 
 start_time = time.time()
-A, D = labeling(G, P)
+labeling(G)
+for node in G.nodes:
+    print("Node", node.data,"   Ancestors:", node.a, "   Decendents:", node.d)
 print("--- %s seconds for finding ancestors and descendants ---" % (time.time() - start_time))
 
+print(G)
 # Draw graph
-#pos = nx.spring_layout(G)
-#nx.draw_networkx(G, pos)
-#plt.title("Random Graph Generation Example")
-#plt.show()
+labeldict = {}
+for node in G.nodes:
+    labeldict[node] = node.data
+pos = nx.spring_layout(G)
+nx.draw_networkx(G, pos, labels=labeldict)
+plt.title("Random Graph Generation Example")
+plt.show()
 

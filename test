@@ -1,0 +1,19 @@
+import matplotlib.pyplot as plt
+import networkx as nx
+import mplcursors
+
+G = nx.DiGraph()
+G.add_node("A", attr1=20)
+G.add_node("B", attr1=25)
+G.add_node("C", attr1=30)
+
+fig, ax = plt.subplots()
+pos = nx.spring_layout(G)
+nodes = nx.draw_networkx_nodes(G, pos, node_size=500, node_color='dodgerblue')
+
+nx.draw_networkx_labels(G, pos, font_color='yellow')
+nx.draw_networkx_edges(G, pos, edgelist=G.edges(), edge_color='black')
+
+
+
+plt.show()
