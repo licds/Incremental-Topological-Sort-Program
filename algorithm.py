@@ -3,99 +3,89 @@ import math
 import matplotlib.pyplot as plt
 import networkx as nx
 import random
-import time
 import numpy as np
 
-
-# Accelerate runtime through taichi
-#ti.init(arch=ti.gpu)
+# Calculate sample rate based on number of rounds
+def sample_rate(power, n):
+    sample_p = (math.log(n))**power/n
+    return sample_p
 
 # Sampling function, Runtime O(n)
-def sample(G, n, sample_p):
-    P = []
+def sample(G, sample_p):
+    S = []
     for node in G.nodes:
         a = random.random()
         if a < sample_p:
-            P.append(node)
-    return P
+            S.append(node)
+    return S
 
+# Label each node with ancestors, descendants, and intersection with sample S
 def labeling(G, S):
     for node in G.nodes:
-        node.a = list(nx.ancestors(G, node))
-        node.a.append(node)
-        node.aS = list(set(node.a).intersection(S))
-        for i in range(len(node.a)):
-            node.a[i] = node.a[i].data
-        node.d = list(nx.descendants(G, node))
-        node.d.append(node)
-        print(node.d)
-        print(set(node.d))
-        print(S)
-        print(set(node.d).intersection(S))
-        node.dS = list(set(node.d).intersection(S))
-        for j in range(len(node.d)):
-            node.d[j] = node.d[j].data
+        node.a = np.array(nx.ancestors(G, node))
+        node.a = np.append(node.a, node)
+        node.aS = np.array(set(node.a).intersection(S))
+
+        node.d = np.array(nx.descendants(G, node))
+        node.d = np.append(node.d, node)
+        node.dS = np.array(set(node.d).intersection(S))
     return 
 
+# Partition graph into subgraphs through labels, S-equivalent will create subgraph
 def partition(G):
     subgraphs = []
-    subgraphs_with_label = []
+    queue = []
     # find the node that has the same ancestors and descendants with another node
-    queue = [G.nodes]
+    for node in G.nodes:
+        queue.append(node)
     for node in queue:
-        subgraph = [node]
-        subgraph_with_label = [node.data]
-        print(node)
+        subgraph = []
         for node2 in queue:
             if node.aS == node2.aS and node.dS == node2.dS:
                 subgraph.append(node2)
-                subgraph_with_label.append(node2.data)
-                queue.remove(node2)
-        subgraphs.append(subgraph)
-        subgraphs_with_label.append(subgraph_with_label)
-        queue.remove(node)
-    return subgraphs, subgraphs_with_label
-                
+        subgraphs.append(tuple(subgraph))
+    subgraphs = set(subgraphs)
+    return subgraphs
 
+# Print all information of graph and nodes  
+def print_info(S, G, subgraphs):
+    print("")
+    print("##### Graph Output #####")
+    print("Sampled nodes are the following:", end =" ")
+    for s in S:
+        print(s.data, end =" ")
+    print("")
+    for node in G.nodes:
+        print("Node", node.data)
+        print("     Ancestors:", end =" ")
+        for ancester in node.a:
+            print(ancester.data, end =" ")
+        print("")
+        print("     Descendants:", end =" ")
+        for descendent in node.d:
+            print(descendent.data, end =" ")
+        print("")
+        print("     Ancestors in sample S:", end =" ")   
+        if len(node.aS) == 0:
+            print("Empty", end =" ") 
+        else:
+            for ancester in node.aS:
+                print(ancester.data, end =" ")
+        print("")
+        print("     Descendants in sample D:", end =" ")
+        if len(node.dS) == 0:
+            print("Empty", end =" ") 
+        else:
+            for descendent in node.dS:
+                print(descendent.data, end =" ")
+        print("")
+    print("The following subgraphs are formed:")
+    i = 1
+    for subgraph in subgraphs:
+        print("Subgraph", i, "contains: ", end =" ")
+        i += 1
+        for node in subgraph:
+            print(node.data, end =" ")
+        print("")
 
-# Number of nodes and probability for edges, INPUT HERE #################################
-n = 10
-p = 0.2
-
-# Probability for sampling
-sample_p = math.log(n)/n
-
-
-# Calculate size of m based on p
-m = math.ceil(math.log(0.000000001,10)/math.log(1-p,10)-1)
-
-# ER is relatively fast but still pretty bad especially after 10,000
-start_time = time.time()
-G = ER(n, p)
-print("--- %s seconds for generating a graph using ER ---" % (time.time() - start_time))
-
-start_time = time.time()
-S = sample(G, n, sample_p)
-print(S)
-print("--- %s seconds for sampling a graph ---" % (time.time() - start_time))
-
-start_time = time.time()
-labeling(G, S)
-for node in G.nodes:
-    print("Node", node.data,"   Ancestors:", node.a, "   Decendents:", node.d)
-    print(node.aS)
-    print(node.dS)
-print("--- %s seconds for finding ancestors and descendants ---" % (time.time() - start_time))
-
-#subgraphs, subgraphs_with_label= partition(G)
-#print("Subgraphs:", subgraphs_with_label)
-
-# Draw graph
-labeldict = {}
-for node in G.nodes:
-    labeldict[node] = node.data
-pos = nx.spring_layout(G)
-nx.draw_networkx(G, pos, labels=labeldict)
-plt.title("Random Graph Generation Example")
-plt.show()
 
