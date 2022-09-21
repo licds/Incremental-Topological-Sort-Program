@@ -11,8 +11,8 @@ from algorithm import *
 ti.init(arch=ti.gpu)
 
 ################################# Number of nodes and probability for edges, INPUT HERE #################################
-n = 1000
-p = 0.1
+n = 10
+p = 0.2
 
 ################################# Probability for sampling #################################
 sample_p = sample_rate(1, n)
