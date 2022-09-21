@@ -10,6 +10,8 @@ class Node(object):
     data = None
     a = list()
     d = list()
+    aS = list()
+    dS = list()
     def __init__(self, d):
 	    self.data = d
 

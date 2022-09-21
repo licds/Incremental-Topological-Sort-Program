@@ -11,29 +11,52 @@ import numpy as np
 #ti.init(arch=ti.gpu)
 
 # Sampling function, Runtime O(n)
-def sample(n, sample_p):
+def sample(G, n, sample_p):
     P = []
-    for node in range(n):
+    for node in G.nodes:
         a = random.random()
         if a < sample_p:
             P.append(node)
     return P
 
-def labeling(G):
+def labeling(G, S):
     for node in G.nodes:
         node.a = list(nx.ancestors(G, node))
         node.a.append(node)
+        node.aS = list(set(node.a).intersection(S))
         for i in range(len(node.a)):
             node.a[i] = node.a[i].data
         node.d = list(nx.descendants(G, node))
         node.d.append(node)
+        print(node.d)
+        print(set(node.d))
+        print(S)
+        print(set(node.d).intersection(S))
+        node.dS = list(set(node.d).intersection(S))
         for j in range(len(node.d)):
             node.d[j] = node.d[j].data
     return 
 
-def partition(S, G):
-    for node in G.nodes:
-        if P 
+def partition(G):
+    subgraphs = []
+    subgraphs_with_label = []
+    # find the node that has the same ancestors and descendants with another node
+    queue = [G.nodes]
+    for node in queue:
+        subgraph = [node]
+        subgraph_with_label = [node.data]
+        print(node)
+        for node2 in queue:
+            if node.aS == node2.aS and node.dS == node2.dS:
+                subgraph.append(node2)
+                subgraph_with_label.append(node2.data)
+                queue.remove(node2)
+        subgraphs.append(subgraph)
+        subgraphs_with_label.append(subgraph_with_label)
+        queue.remove(node)
+    return subgraphs, subgraphs_with_label
+                
+
 
 # Number of nodes and probability for edges, INPUT HERE #################################
 n = 10
@@ -52,16 +75,21 @@ G = ER(n, p)
 print("--- %s seconds for generating a graph using ER ---" % (time.time() - start_time))
 
 start_time = time.time()
-P = sample(n, sample_p)
+S = sample(G, n, sample_p)
+print(S)
 print("--- %s seconds for sampling a graph ---" % (time.time() - start_time))
 
 start_time = time.time()
-labeling(G)
+labeling(G, S)
 for node in G.nodes:
     print("Node", node.data,"   Ancestors:", node.a, "   Decendents:", node.d)
+    print(node.aS)
+    print(node.dS)
 print("--- %s seconds for finding ancestors and descendants ---" % (time.time() - start_time))
 
-print(G)
+#subgraphs, subgraphs_with_label= partition(G)
+#print("Subgraphs:", subgraphs_with_label)
+
 # Draw graph
 labeldict = {}
 for node in G.nodes:
