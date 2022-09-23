@@ -22,13 +22,13 @@ def sample(G, sample_p):
 # Label each node with ancestors, descendants, and intersection with sample S
 def labeling(G, S):
     for node in G.nodes:
-        node.a = np.array(nx.ancestors(G, node))
-        node.a = np.append(node.a, node)
-        node.aS = np.array(set(node.a).intersection(S))
+        node.a = list(nx.ancestors(G, node))
+        node.a.append(node)
+        node.aS = list(set(node.a).intersection(S))
 
-        node.d = np.array(nx.descendants(G, node))
-        node.d = np.append(node.d, node)
-        node.dS = np.array(set(node.d).intersection(S))
+        node.d = list(nx.descendants(G, node))
+        node.d.append(node)
+        node.dS = list(set(node.d).intersection(S))
     return 
 
 # Partition graph into subgraphs through labels, S-equivalent will create subgraph
