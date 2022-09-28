@@ -12,7 +12,7 @@ from algorithm1 import *
 ti.init(arch=ti.gpu)
 
 ################################# Number of nodes and probability for edges, INPUT HERE #################################
-n = 10
+n = 8
 p = 0.2
 
 ################################# Probability for sampling #################################
@@ -50,33 +50,8 @@ samples = []
 rounds(details, samples, graphs, G, G.nodes)
 print("--- %s seconds for doing rounds ---" % (time.time() - start_time))
 
-graphs_info = decode_graphs(graphs)
-samples_info = decode_samples(samples)
-
-
-print("##### GRAPH INFO #####")
-for i in graphs_info:
-    print(i)
-
-print("##### SAMPLE INFO #####")
-for i in samples_info:
-    print(i)
-
-i = 1
-for round in details:
-    print("##### Round", i, "#####")
-    for adict in round:
-        for node in adict.keys():
-            print("Node", node.data, "has ancestors", end =" ")
-            for a in adict[node]:
-                print(a.data, " ", end =" ")
-            print("")
-    for ddict in round:
-        for node in adict.keys():
-            print("Node ", node.data, "has descendents", end =" ")
-            for d in ddict[node]:
-                print(d.data, end =" ")
-            print("")
-    i += 1
+decode_graphs(graphs)
+decode_samples(samples)
+decode_details(details)
 
 #draw(G)

@@ -146,7 +146,9 @@ def decode_graphs(sets):
             j += 1
         i += 1
         j = 0
-    return sets_info
+    print("##### GRAPH INFO #####")
+    for i in sets_info:
+        print(i)
 
 def decode_samples(sets):
     samples_info = []
@@ -156,8 +158,31 @@ def decode_samples(sets):
         for node in sample:
             samples_info[i].append(node.data)
         i += 1
-    return samples_info
+    print("##### SAMPLE INFO #####")
+    for i in samples_info:
+        print(i)    
 
+def decode_details(details):
+    i = 1
+    for round in details:
+        print("##### Round", i, "#####")
+        max = -1
+        for node in round[0].keys():
+            if len(round[0][node]) > max:
+                max = len(round[0][node])
+        for node in round[0].keys():
+            temp = 0
+            print("Node", node.data, "has ancestors     ", end =" ")
+            for a in round[0][node]:
+                print(a.data, end =" ")
+                temp += 1
+            print("  "*(max-temp), end="")
+            print("        descendents", end="     ")
+            for d in round[1][node]:
+                print(d.data, end =" ")
+            print("")
+        i += 1
+    
 def draw(G):
     labeldict = {}
     for node in G.nodes:
