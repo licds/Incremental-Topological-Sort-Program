@@ -12,7 +12,7 @@ from algorithm1 import *
 ti.init(arch=ti.gpu)
 
 ################################# Number of nodes and probability for edges, INPUT HERE #################################
-n = 8
+n = 800
 p = 0.2
 
 ################################# Probability for sampling #################################
@@ -52,6 +52,6 @@ print("--- %s seconds for doing rounds ---" % (time.time() - start_time))
 
 decode_graphs(graphs)
 decode_samples(samples)
-decode_details(details)
+#decode_details(details)
 
 #draw(G)
