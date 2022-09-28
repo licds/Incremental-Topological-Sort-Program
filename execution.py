@@ -11,7 +11,11 @@ from algorithm import *
 ti.init(arch=ti.gpu)
 
 ################################# Number of nodes and probability for edges, INPUT HERE #################################
+<<<<<<< HEAD:execution.py
 n = 100
+=======
+n = 10
+>>>>>>> parent of 910000d (Labeling fixed):execution1.py
 p = 0.2
 
 ################################# Probability for sampling #################################
@@ -44,10 +48,15 @@ print("--- %s seconds for breaking graph into subgraphs ---" % (time.time() - st
 print_info(S, G, subgraphs)
 
 # Draw graph
+
 labeldict = {}
 for node in G.nodes:
     labeldict[node] = node.data
 pos = nx.spring_layout(G)
 nx.draw_networkx(G, pos, labels=labeldict)
 plt.title("Random Graph Generation Example")
+<<<<<<< HEAD:execution.py
 plt.show()
+=======
+plt.show()
+>>>>>>> parent of 910000d (Labeling fixed):execution1.py

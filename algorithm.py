@@ -20,6 +20,7 @@ def sample(G, n, sample_p):
     return P
 
 def labeling(G, S):
+<<<<<<< HEAD:algorithm.py
     for node in G.nodes:
         node.a = list(nx.ancestors(G, node))
         node.a.append(node)
@@ -28,6 +29,21 @@ def labeling(G, S):
         node.d = list(nx.descendants(G, node))
         node.d.append(node)
         node.dS = list(set(node.d).intersection(S))
+=======
+    for s in S:
+        print("Sample node", s.data)
+        s.a = list(nx.ancestors(G, s))
+        s.a.append(s)
+        s.d = list(nx.descendants(G, s))
+        s.d.append(s)
+        for node in G.nodes:
+            print("     Node ", node.data, " has ancestors ", node.aS, " and descendents ", node.dS)
+            if node in s.a:
+                node.dS.append(s)
+            elif node in s.d:
+                node.aS.append(s)
+            print("     Node ", node.data, " has ancestors ", node.aS, " and descendents ", node.dS)
+>>>>>>> parent of 910000d (Labeling fixed):algorithm1.py
     return 
 
 def partition(G):
