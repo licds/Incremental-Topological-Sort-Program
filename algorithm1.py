@@ -3,23 +3,22 @@ import math
 import matplotlib.pyplot as plt
 import networkx as nx
 import random
+import time
 import numpy as np
 
-# Calculate sample rate based on number of rounds
-def sample_rate(power, n):
-    sample_p = (math.log(n))**power/n
-    return sample_p
+
+# Accelerate runtime through taichi
+#ti.init(arch=ti.gpu)
 
 # Sampling function, Runtime O(n)
-def sample(G, sample_p):
-    S = []
+def sample(G, n, sample_p):
+    P = []
     for node in G.nodes:
         a = random.random()
         if a < sample_p:
-            S.append(node)
-    return S
+            P.append(node)
+    return P
 
-# Label each node with ancestors, descendants, and intersection with sample S
 def labeling(G, S):
     for node in G.nodes:
         node.aS = []
@@ -35,15 +34,15 @@ def labeling(G, S):
             j.aS.append(s)
     return 
 
-# Partition graph into subgraphs through labels, S-equivalent will create subgraph
 def partition(G):
     subgraphs = []
-    queue = []
+    subgraphs_with_label = []
     # find the node that has the same ancestors and descendants with another node
-    for node in G.nodes:
-        queue.append(node)
+    queue = [G.nodes]
     for node in queue:
-        subgraph = []
+        subgraph = [node]
+        subgraph_with_label = [node.data]
+        print(node)
         for node2 in queue:
             if node.aS == node2.aS and node.dS == node2.dS:
                 subgraph.append(node2)
@@ -92,4 +91,45 @@ def print_info(S, G, subgraphs):
             print(node.data, end =" ")
         print("")
 
+
+# Number of nodes and probability for edges, INPUT HERE #################################
+n = 10
+p = 0.2
+
+# Probability for sampling
+sample_p = math.log(n)/n
+
+
+# Calculate size of m based on p
+m = math.ceil(math.log(0.000000001,10)/math.log(1-p,10)-1)
+
+# ER is relatively fast but still pretty bad especially after 10,000
+start_time = time.time()
+G = ER(n, p)
+print("--- %s seconds for generating a graph using ER ---" % (time.time() - start_time))
+
+start_time = time.time()
+S = sample(G, n, sample_p)
+print(S)
+print("--- %s seconds for sampling a graph ---" % (time.time() - start_time))
+
+start_time = time.time()
+labeling(G, S)
+for node in G.nodes:
+    print("Node", node.data,"   Ancestors:", node.a, "   Decendents:", node.d)
+    print(node.aS)
+    print(node.dS)
+print("--- %s seconds for finding ancestors and descendants ---" % (time.time() - start_time))
+
+#subgraphs, subgraphs_with_label= partition(G)
+#print("Subgraphs:", subgraphs_with_label)
+
+# Draw graph
+labeldict = {}
+for node in G.nodes:
+    labeldict[node] = node.data
+pos = nx.spring_layout(G)
+nx.draw_networkx(G, pos, labels=labeldict)
+plt.title("Random Graph Generation Example")
+plt.show()
 
