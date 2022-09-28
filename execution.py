@@ -12,7 +12,11 @@ ti.init(arch=ti.gpu)
 
 ################################# Number of nodes and probability for edges, INPUT HERE #################################
 <<<<<<< HEAD:execution.py
+<<<<<<< HEAD:execution.py
 n = 100
+=======
+n = 10
+>>>>>>> parent of 910000d (Labeling fixed):execution1.py
 =======
 n = 10
 >>>>>>> parent of 910000d (Labeling fixed):execution1.py
@@ -57,6 +61,9 @@ nx.draw_networkx(G, pos, labels=labeldict)
 plt.title("Random Graph Generation Example")
 <<<<<<< HEAD:execution.py
 plt.show()
+<<<<<<< HEAD:execution.py
 =======
 plt.show()
+>>>>>>> parent of 910000d (Labeling fixed):execution1.py
+=======
 >>>>>>> parent of 910000d (Labeling fixed):execution1.py
