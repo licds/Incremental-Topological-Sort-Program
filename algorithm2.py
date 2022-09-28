@@ -11,6 +11,7 @@ def sample_rate(power, n):
     return sample_p
 
 # Sampling function, Runtime O(n)
+# Take list of nodes
 def sample(nodes, sample_p):
     S = []
     for node in nodes:
@@ -92,71 +93,20 @@ def print_info(S, G, subgraphs):
             print(node.data, end =" ")
         print("")
 
-def round(G, nodes, r):
+
+def rounds(samples, graphs, G, nodes, r, run):
     sample_p = sample_rate(r, len(G.nodes))
     S = sample(nodes, sample_p)
+    samples.append(S)
     labeling(G, nodes, S)
     subgraphs = partition(nodes)
-    return [subgraphs, S]
-
-def rounds(details, samples, graphs, G, nodes):
-    r = 1
-    result = round(G, nodes, r)
-    adict = {}
-    ddict = {}
-    for node in G.nodes:
-        adict[node] = node.aS
-        ddict[node] = node.dS
-    details.append([adict, ddict])
-    graphs.append(result[0])
-    samples.append(result[1])
-    wait = []
-    for subgraph in graphs[r-1]:
-        if len(subgraph) > 1:
-            wait.append(subgraph)
-    while len(wait) > 0:
+    graphs.append(subgraphs)
+    if run == 1:
         r += 1
-        graphs.append([])
-        samples.append([])
-        for subgraph in wait:
-            result = round(G, subgraph, r)
-            graphs[r-1].extend(result[0])
-            samples[r-1].extend(result[1])
-        wait = []
-        for subgraph in graphs[r-1]:
+        for subgraph in subgraphs:
             if len(subgraph) > 1:
-                wait.append(subgraph)
-        adict = {}
-        ddict = {}
-        for node in G.nodes:
-            adict[node] = node.aS
-            ddict[node] = node.dS
-        details.append([adict, ddict])
-
-def decode_graphs(sets):
-    i = 0
-    j = 0
-    sets_info = []
-    for subsets in sets:
-        sets_info.append([])
-        for subset in subsets:
-            sets_info[i].append([])
-            for node in subset:
-                sets_info[i][j].append(node.data)
-            j += 1
-        i += 1
-        j = 0
-    return sets_info
-
-def decode_samples(sets):
-    samples_info = []
-    i = 0
-    for sample in sets:
-        samples_info.append([])
-        for node in sample:
-            samples_info[i].append(node.data)
-        i += 1
-    return samples_info
+                rounds(samples, graphs, G, subgraph, r, 1)
+    return samples, graphs
 
 def draw(G):
     labeldict = {}

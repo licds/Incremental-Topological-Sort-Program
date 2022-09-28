@@ -20,14 +20,14 @@ def ER(n, p):
     n: number of vertices
     p: inclusion probability
     """
-    V = [Node(v) for v in range(n)]
+    V = np.arange(n)
     
     # Create a list of E possible edges
-    E = set()
-    for combination in numpy_combinations(range(n)):
+    E = []
+    for combination in numpy_combinations(V):
         a = random.random()
         if a < p:
-            E.add(combination)
+            E.append(combination)
     
     # Create directed graph
     return V, E
@@ -36,3 +36,8 @@ def ER(n, p):
 def numpy_combinations(x):
     idx = np.stack(np.triu_indices(len(x), k=1), axis=-1)
     return x[idx]
+
+
+start_time = time.time()
+V, E = ER(10000, 0.2)
+print("--- %s seconds for generating a graph using ER ---" % (time.time() - start_time))
