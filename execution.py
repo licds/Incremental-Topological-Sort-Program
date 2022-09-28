@@ -4,14 +4,14 @@ import networkx as nx
 import time
 import numpy as np
 import taichi as ti
-from randomDAGGeneration1 import ER
-from algorithm1 import *
+from randomDAGGeneration import ER
+from algorithm import *
 
 # Accelerate runtime through taichi
 ti.init(arch=ti.gpu)
 
 ################################# Number of nodes and probability for edges, INPUT HERE #################################
-n = 10
+n = 100
 p = 0.2
 
 ################################# Probability for sampling #################################
@@ -44,7 +44,6 @@ print("--- %s seconds for breaking graph into subgraphs ---" % (time.time() - st
 print_info(S, G, subgraphs)
 
 # Draw graph
-
 labeldict = {}
 for node in G.nodes:
     labeldict[node] = node.data

@@ -1,4 +1,4 @@
-from randomDAGGeneration1 import ER
+from randomDAGGeneration import ER
 import math
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -20,19 +20,14 @@ def sample(G, n, sample_p):
     return P
 
 def labeling(G, S):
-    for s in S:
-        print("Sample node", s.data)
-        s.a = list(nx.ancestors(G, s))
-        s.a.append(s)
-        s.d = list(nx.descendants(G, s))
-        s.d.append(s)
-        for node in G.nodes:
-            print("     Node ", node.data, " has ancestors ", node.aS, " and descendents ", node.dS)
-            if node in s.a:
-                node.dS.append(s)
-            elif node in s.d:
-                node.aS.append(s)
-            print("     Node ", node.data, " has ancestors ", node.aS, " and descendents ", node.dS)
+    for node in G.nodes:
+        node.a = list(nx.ancestors(G, node))
+        node.a.append(node)
+        node.aS = list(set(node.a).intersection(S))
+
+        node.d = list(nx.descendants(G, node))
+        node.d.append(node)
+        node.dS = list(set(node.d).intersection(S))
     return 
 
 def partition(G):
@@ -76,7 +71,7 @@ def print_info(S, G, subgraphs):
             for ancester in node.aS:
                 print(ancester.data, end =" ")
         print("")
-        print("     Descendants in sample S:", end =" ")
+        print("     Descendants in sample D:", end =" ")
         if len(node.dS) == 0:
             print("Empty", end =" ") 
         else:
