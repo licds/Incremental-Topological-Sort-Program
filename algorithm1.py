@@ -20,18 +20,19 @@ def sample(G, n, sample_p):
     return P
 
 def labeling(G, S):
-    for node in G.nodes:
-        node.aS = []
-        node.dS = []
     for s in S:
+        print("Sample node", s.data)
         s.a = list(nx.ancestors(G, s))
         s.a.append(s)
         s.d = list(nx.descendants(G, s))
         s.d.append(s)
-        for i in s.a:
-            i.dS.append(s)
-        for j in s.d:
-            j.aS.append(s)
+        for node in G.nodes:
+            print("     Node ", node.data, " has ancestors ", node.aS, " and descendents ", node.dS)
+            if node in s.a:
+                node.dS.append(s)
+            elif node in s.d:
+                node.aS.append(s)
+            print("     Node ", node.data, " has ancestors ", node.aS, " and descendents ", node.dS)
     return 
 
 def partition(G):
