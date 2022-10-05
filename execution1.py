@@ -9,10 +9,10 @@ from DAG1 import ER
 from algorithm1 import *
 
 # Accelerate runtime through taichi
-ti.init(arch=ti.gpu)
+# ti.init(arch=ti.gpu)
 
 ################################# Number of nodes and probability for edges, INPUT HERE #################################
-n = 800
+n = 10000
 p = 0.2
 
 ################################# Probability for sampling #################################
@@ -25,14 +25,15 @@ sample_p = sample_rate(1, n)
 print("##### RUNTIME ANALYSIS #####")
 # Generate a random graph with ER
 start_time = time.time()
-G = ER(n, p)
+# G = ER(n, p)
 print("--- %s seconds for generating a graph using ER ---" % (time.time() - start_time))
 
 # Sample nodes
+nodes = list(range(100000))
 start_time = time.time()
-S = sample(G.nodes, sample_p)
+S = sample(nodes, sample_p)
 print("--- %s seconds for sampling a graph ---" % (time.time() - start_time))
-
+"""
 # Label every nodes with ancestors and descendants, as well as intersection with sample S
 start_time = time.time()
 labeling(G, G.nodes, S)
@@ -55,3 +56,4 @@ decode_samples(samples)
 #decode_details(details)
 
 #draw(G)
+"""
