@@ -84,12 +84,20 @@ def labeling(nodes, samples, r, adict, ddict):
                 pass
     return ancestors, descendants
 
+
+
 # A line graph
 n = 100000
 nodes = set(range(n))
 edges = []
 for i in range(n-1):
-    edges.append((i, i+1))       
+    edges.append((i, i+1)) 
+# samples = set(range(100,300))
+# samples_round = {}
+# samples_round[1] = samples
+      
+adict, ddict = labeldict(edges)
+
 
 ##### Takes 0.13-0.14s for sampling 100000 nodes
 # sample_time = 0
@@ -112,17 +120,20 @@ for i in range(n-1):
 #     label_time += end-start
 # print("label_time:", label_time/10)
 
-# nodes = [0, 1, 2, 3, 4, 5, 6, 7]
-# edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7)]
-# samples_round = {}
+nodes = [0, 1, 2, 3, 4, 5, 6, 7]
+edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7)]
+samples_round = {}
 
-# s = [2, 5]
-# samples_round[1] = s
-# adict, ddict = labeldict(edges)
-# ancestors, descendants = labeling(nodes, samples_round, 1,adict, ddict)
-# print("ancestors:", ancestors)
-# print("descendants:", descendants)
+s = [2, 5, 7]
+samples_round[1] = s
+adict, ddict = labeldict(edges)
+ancestors, descendants = labeling(nodes, samples_round, 1,adict, ddict)
+print("ancestors:", ancestors)
+print("descendants:", descendants)
 
+keys = ancestors.keys()
+values = zip(ancestors.values(), descendants.values())
+combined = dict(zip(keys, values))
 
         
         
