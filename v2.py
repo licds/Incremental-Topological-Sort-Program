@@ -120,15 +120,17 @@ def graph(types, n):
         layers.append(list(range(x, n+1, y)))
         for i in range(1,len(layers)):
             for j in range(len(layers[i])):
-                edges.append((layers[i][j], layers[i-1][j*2]))
-                edges.append((layers[i][j], layers[i-1][j*2+1]))
+                try:
+                    edges.append((layers[i][j], layers[i-1][j*2]))
+                except:
+                    pass
+                try:
+                    edges.append((layers[i][j], layers[i-1][j*2+1]))
+                except:
+                    pass
         return nodes, edges
 
-n = 7
-nodes, edges = graph('perfect', n)
-print(nodes)
-print(edges)
-adict, ddict = labeldict(nodes, edges)
+
 ##### Takes 0.13-0.14s for sampling 100000 nodes
 # sample_time = 0
 # for i in range(100):
@@ -158,37 +160,48 @@ adict, ddict = labeldict(nodes, edges)
 # samples_round[2] = [1, 4, 5]
 # adict, ddict = labeldict(nodes, edges)
 
+#### Graph Initialization ####
+n = 16383 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+nodes, edges = graph('perfect', n) #line, perfect
+adict, ddict = labeldict(nodes, edges)
+
 begin = time.time()
 i = 1
 subgraphs = [nodes]
 start = time.time()
 samples_round = newsample(nodes)
-samples_round[1] = [1]
-samples_round[2] = [3,5]
-samples_round[3] = [2,4,6,7]
-print("sample :", samples_round)
+# print("sample :", samples_round)
 sample_time = time.time()-start
 label_time = 0
 partition_time = 0
 while len(subgraphs) > 0:
-    print("Round", i, ":", subgraphs)
-    start = time.time()
+    # print("Round", i, ":", subgraphs)
     ancestors = {}
     descendants = {}
-    graph = []
+    graphs = []
     for subgraph in subgraphs:
+        start = time.time()
         anc, des = labeling(subgraph, samples_round, i, adict, ddict)
+        combined = label(anc, des)
+        label_time += time.time()-start
+        start = time.time()
+        graph = partition(combined)
+        graphs.extend(graph)
+        partition_time += time.time()-start
+        start = time.time()
         ancestors.update(anc)
         descendants.update(des)
-    combined = label(ancestors, descendants)
-    print("labels :", combined)
-    label_time += time.time()-start
+        label_time += time.time()-start
     start = time.time()
-    subgraphs = partition(combined)
+    combined = label(ancestors, descendants)
+    label_time += time.time()-start
+    # print("labels :", combined)
+    start = time.time()
+    subgraphs = graphs
     partition_time += time.time()-start
     i += 1
 end = time.time()
-# print("sample_time:", sample_time)
-# print("label_time:", label_time)
-# print("partition_time:", partition_time)
-# print("total_time:", end-begin)
+print("sample_time:", sample_time)
+print("label_time:", label_time)
+print("partition_time:", partition_time)
+print("total_time:", end-begin)
