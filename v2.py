@@ -99,44 +99,36 @@ def partition(combined):
         subgraphs.append(subgraph)
     return subgraphs
 
-# A line graph
-n = 15
-nodes = set(range(n))
-edges = []
-for i in range(n-1):
-    edges.append((i, i+1))       
-adict, ddict = labeldict(nodes, edges)
+def graph(types, n):
+    nodes = []
+    edges = []
+    if types == 'line':
+        nodes = set(range(n))
+        edges = []
+        for i in range(n-1):
+            edges.append((i, i+1))       
+        return nodes, edges
+    elif types == 'perfect':
+        layers = []
+        nodes = set(range(1,n+1))
+        x = 1
+        y = 2
+        while x+y < n:
+            layers.append(list(range(x, n+1, y)))
+            x = x*2
+            y = y*2
+        layers.append(list(range(x, n+1, y)))
+        for i in range(1,len(layers)):
+            for j in range(len(layers[i])):
+                edges.append((layers[i][j], layers[i-1][j*2]))
+                edges.append((layers[i][j], layers[i-1][j*2+1]))
+        return nodes, edges
 
-edges = []
-wait = [2]
-visited = []
-twice = [2]
-while len(wait) > 0:
-    print(wait)
-    for i in wait.copy():
-        print("wait", i)
-        wait.remove(i)
-        visited.append(i)
-        if i in twice:
-            edges.append((i, int(i/2)))
-            if int(i+i/2) <= n:
-                edges.append((i, int(i+i/2)))
-        else:
-            if int(i+1) <= n:
-                edges.append((i, i+1))
-            edges.append((i, i-1))
-        next = (i+1)*2
-        if next not in visited and next not in wait and next <= n:
-            wait.append(next)
-        next = (i-1)*2
-        if next not in visited and next not in wait and next <= n:
-            wait.append(next)
-        next = i*2
-        if next not in visited and next not in wait and next <= n:
-            wait.append(next)
-            twice.append(next)
+n = 7
+nodes, edges = graph('perfect', n)
+print(nodes)
 print(edges)
-
+adict, ddict = labeldict(nodes, edges)
 ##### Takes 0.13-0.14s for sampling 100000 nodes
 # sample_time = 0
 # for i in range(100):
@@ -171,21 +163,25 @@ i = 1
 subgraphs = [nodes]
 start = time.time()
 samples_round = newsample(nodes)
-# print("sample :", samples_round)
+samples_round[1] = [1]
+samples_round[2] = [3,5]
+samples_round[3] = [2,4,6,7]
+print("sample :", samples_round)
 sample_time = time.time()-start
 label_time = 0
 partition_time = 0
 while len(subgraphs) > 0:
-    # print("Round", i, ":", subgraphs)
+    print("Round", i, ":", subgraphs)
     start = time.time()
     ancestors = {}
     descendants = {}
+    graph = []
     for subgraph in subgraphs:
         anc, des = labeling(subgraph, samples_round, i, adict, ddict)
         ancestors.update(anc)
         descendants.update(des)
     combined = label(ancestors, descendants)
-    # print("labels :", combined)
+    print("labels :", combined)
     label_time += time.time()-start
     start = time.time()
     subgraphs = partition(combined)
