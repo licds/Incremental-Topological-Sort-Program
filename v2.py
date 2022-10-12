@@ -1,27 +1,15 @@
+from itertools import combinations
 import math
 import random
+from re import sub
 import time
 from tkinter import N
+import pandas as pd
+import pickle
 
 def sample_rate(power, n):
     sample_p = (math.log(n))**power/n
     return sample_p
-
-# Approach 1
-def sample1(nodes):
-    r = 1
-    samples_round = {}
-    notvisited = nodes.copy()
-    while len(notvisited) != 0:
-        samples_round[r] = []
-        sample_p = sample_rate(r, len(nodes))
-        for node in notvisited.copy():
-            a = random.random()
-            if a < sample_p:
-                samples_round[r].append(node)
-                notvisited.remove(node)
-        r += 1
-    return samples_round
 
 # Approach 2 ######## BETTER ########
 def sample(nodes, sample_p):
@@ -65,28 +53,43 @@ def labeldict(nodes, edges):
 def labeling(nodes, samples, r, adict, ddict):
     ancestors = {}
     descendants = {}
+    unique = set(nodes)
+    samples = list(unique.intersection(set(samples[r])))
     for node in nodes:
         ancestors[node] = []
         descendants[node] = []
-    for s in samples[r]:
-        notvisit_ans = adict[s].copy()
-        notvisit_des = ddict[s].copy()
+    for s in samples:
+        notvisit_ans = list(set(adict[s].copy()).intersection(unique))
+        notvisit_des = list(set(ddict[s].copy()).intersection(unique))
         ancestors[s].append(s)
         descendants[s].append(s)
         while len(notvisit_ans) > 0:
             node = notvisit_ans.pop(0)
             ancestors[node].append(s)
-            notvisit_ans.extend(adict[node])
+            notvisit_ans.extend(list(set(adict[node]).intersection(unique)))
         while len(notvisit_des) > 0:
             node = notvisit_des.pop(0)
             descendants[node].append(s)
-            notvisit_des.extend(ddict[node])
+            notvisit_des.extend(list(set(ddict[node]).intersection(unique)))
     return ancestors, descendants
 
+def label(ancestors, descendants):
+    keys = ancestors.keys()
+    values = zip(ancestors.values(), descendants.values())
+    combined = dict(zip(keys, values))
+    return combined
 
+def partition(combined):
+    df = pd.DataFrame({'key':combined.keys(), 'value':combined.values()})
+    subgraphs = []
+    for val in list(map(pickle.loads, dict.fromkeys(map(pickle.dumps, list(df.value))))):
+        subgraph = list(df.key[df.value==val])
+        if len(subgraph) > 1:
+            subgraphs.append(subgraph)
+    return subgraphs
 
 # A line graph
-n = 100000
+n = 5000
 nodes = set(range(n))
 edges = []
 for i in range(n-1):
@@ -119,26 +122,38 @@ adict, ddict = labeldict(nodes, edges)
 #     label_time += end-start
 # print("label_time:", label_time/10)
 
-nodes = [0, 1, 2, 3, 4, 5, 6, 7]
-edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7)]
-samples_round = {}
+# nodes = set([0, 1, 2, 3, 4, 5, 6, 7])
+# edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7)]
+# samples_round = {}
 
-s = [2, 5, 7]
-samples_round[1] = s
-adict, ddict = labeldict(nodes, edges)
-ancestors, descendants = labeling(nodes, samples_round, 1,adict, ddict)
-print("ancestors:", ancestors)
-print("descendants:", descendants)
+# samples_round[1] = [2, 6]
+# samples_round[2] = [1, 3, 5]
+# adict, ddict = labeldict(nodes, edges)
 
-keys = ancestors.keys()
-values = zip(ancestors.values(), descendants.values())
-combined = dict(zip(keys, values))
-
-
-res = []
-for node in nodes:
-    # using all to check all keys with similar values
-    flag = all(combined[node] == combined[ele] for ele in combined)
-    if flag:
-        res.append(node)
-print("res:", res)
+begin = time.time()
+i = 1
+subgraphs = [nodes]
+start = time.time()
+samples_round = newsample(nodes)
+sample_time = time.time()-start
+label_time = 0
+partition_time = 0
+while len(subgraphs) > 0:
+    start = time.time()
+    ancestors = {}
+    descendants = {}
+    for subgraph in subgraphs:
+        anc, des = labeling(subgraph, samples_round, i, adict, ddict)
+        ancestors.update(anc)
+        descendants.update(des)
+    combined = label(ancestors, descendants)
+    label_time += time.time()-start
+    start = time.time()
+    subgraphs = partition(combined)
+    partition_time += time.time()-start
+    i += 1
+end = time.time()
+print("sample_time:", sample_time)
+print("label_time:", label_time)
+print("partition_time:", partition_time)
+print("total_time:", end-begin)
