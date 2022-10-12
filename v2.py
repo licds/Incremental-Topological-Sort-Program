@@ -1,11 +1,9 @@
-from itertools import combinations
 import math
 import random
-from re import sub
 import time
-from tkinter import N
 import pandas as pd
 import pickle
+import numpy as np
 
 def sample_rate(power, n):
     sample_p = (math.log(n))**power/n
@@ -79,7 +77,7 @@ def label(ancestors, descendants):
     combined = dict(zip(keys, values))
     return combined
 
-def partition(combined):
+def partition_df(combined):
     df = pd.DataFrame({'key':combined.keys(), 'value':combined.values()})
     subgraphs = []
     for val in list(map(pickle.loads, dict.fromkeys(map(pickle.dumps, list(df.value))))):
@@ -88,18 +86,56 @@ def partition(combined):
             subgraphs.append(subgraph)
     return subgraphs
 
+def partition(combined):
+    vals = np.array(list(combined.items()), dtype=object)
+    uniq, count = np.unique(vals[:,1], return_counts=True)
+    uniq = uniq[count > 1]
+    subgraphs = []
+    for val in uniq:
+        subgraph = []
+        for row in range(len(vals)):
+            if vals[row,1] == val:
+                subgraph.append(vals[row,0])
+        subgraphs.append(subgraph)
+    return subgraphs
+
 # A line graph
-n = 5000
+n = 15
 nodes = set(range(n))
 edges = []
 for i in range(n-1):
-    edges.append((i, i+1)) 
-# samples = set(range(100,300))
-# samples_round = {}
-# samples_round[1] = samples
-      
+    edges.append((i, i+1))       
 adict, ddict = labeldict(nodes, edges)
 
+edges = []
+wait = [2]
+visited = []
+twice = [2]
+while len(wait) > 0:
+    print(wait)
+    for i in wait.copy():
+        print("wait", i)
+        wait.remove(i)
+        visited.append(i)
+        if i in twice:
+            edges.append((i, int(i/2)))
+            if int(i+i/2) <= n:
+                edges.append((i, int(i+i/2)))
+        else:
+            if int(i+1) <= n:
+                edges.append((i, i+1))
+            edges.append((i, i-1))
+        next = (i+1)*2
+        if next not in visited and next not in wait and next <= n:
+            wait.append(next)
+        next = (i-1)*2
+        if next not in visited and next not in wait and next <= n:
+            wait.append(next)
+        next = i*2
+        if next not in visited and next not in wait and next <= n:
+            wait.append(next)
+            twice.append(next)
+print(edges)
 
 ##### Takes 0.13-0.14s for sampling 100000 nodes
 # sample_time = 0
@@ -126,8 +162,8 @@ adict, ddict = labeldict(nodes, edges)
 # edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7)]
 # samples_round = {}
 
-# samples_round[1] = [2, 6]
-# samples_round[2] = [1, 3, 5]
+# samples_round[1] = [2, 3, 6]
+# samples_round[2] = [1, 4, 5]
 # adict, ddict = labeldict(nodes, edges)
 
 begin = time.time()
@@ -135,10 +171,12 @@ i = 1
 subgraphs = [nodes]
 start = time.time()
 samples_round = newsample(nodes)
+# print("sample :", samples_round)
 sample_time = time.time()-start
 label_time = 0
 partition_time = 0
 while len(subgraphs) > 0:
+    # print("Round", i, ":", subgraphs)
     start = time.time()
     ancestors = {}
     descendants = {}
@@ -147,13 +185,14 @@ while len(subgraphs) > 0:
         ancestors.update(anc)
         descendants.update(des)
     combined = label(ancestors, descendants)
+    # print("labels :", combined)
     label_time += time.time()-start
     start = time.time()
     subgraphs = partition(combined)
     partition_time += time.time()-start
     i += 1
 end = time.time()
-print("sample_time:", sample_time)
-print("label_time:", label_time)
-print("partition_time:", partition_time)
-print("total_time:", end-begin)
+# print("sample_time:", sample_time)
+# print("label_time:", label_time)
+# print("partition_time:", partition_time)
+# print("total_time:", end-begin)
