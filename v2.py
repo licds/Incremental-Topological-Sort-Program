@@ -43,7 +43,7 @@ def newsample(nodes):
         r += 1
     return samples_round
 
-def labeldict(edges):
+def labeldict(nodes, edges):
     adict = {}
     ddict = {}
     for edge in edges:
@@ -55,6 +55,11 @@ def labeldict(edges):
             ddict[edge[1]].append(edge[0])
         else:
             ddict[edge[1]] = [edge[0]]
+    for node in nodes:
+        if node not in adict:
+            adict[node] = []
+        if node not in ddict:
+            ddict[node] = []
     return adict, ddict
 
 def labeling(nodes, samples, r, adict, ddict):
@@ -71,17 +76,11 @@ def labeling(nodes, samples, r, adict, ddict):
         while len(notvisit_ans) > 0:
             node = notvisit_ans.pop(0)
             ancestors[node].append(s)
-            try:
-                notvisit_ans.extend(adict[node])
-            except:
-                pass
+            notvisit_ans.extend(adict[node])
         while len(notvisit_des) > 0:
             node = notvisit_des.pop(0)
             descendants[node].append(s)
-            try:
-                notvisit_des.extend(ddict[node])
-            except:
-                pass
+            notvisit_des.extend(ddict[node])
     return ancestors, descendants
 
 
@@ -96,7 +95,7 @@ for i in range(n-1):
 # samples_round = {}
 # samples_round[1] = samples
       
-adict, ddict = labeldict(edges)
+adict, ddict = labeldict(nodes, edges)
 
 
 ##### Takes 0.13-0.14s for sampling 100000 nodes
@@ -126,7 +125,7 @@ samples_round = {}
 
 s = [2, 5, 7]
 samples_round[1] = s
-adict, ddict = labeldict(edges)
+adict, ddict = labeldict(nodes, edges)
 ancestors, descendants = labeling(nodes, samples_round, 1,adict, ddict)
 print("ancestors:", ancestors)
 print("descendants:", descendants)
@@ -135,5 +134,11 @@ keys = ancestors.keys()
 values = zip(ancestors.values(), descendants.values())
 combined = dict(zip(keys, values))
 
-        
-        
+
+res = []
+for node in nodes:
+    # using all to check all keys with similar values
+    flag = all(combined[node] == combined[ele] for ele in combined)
+    if flag:
+        res.append(node)
+print("res:", res)
