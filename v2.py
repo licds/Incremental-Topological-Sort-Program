@@ -161,8 +161,8 @@ def graph(types, n):
 # adict, ddict = labeldict(nodes, edges)
 
 #### Graph Initialization ####
-n = 16383 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
-nodes, edges = graph('perfect', n) #line, perfect
+n = 16 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+nodes, edges = graph('line', n) #line, perfect
 adict, ddict = labeldict(nodes, edges)
 
 begin = time.time()
@@ -170,12 +170,12 @@ i = 1
 subgraphs = [nodes]
 start = time.time()
 samples_round = newsample(nodes)
-# print("sample :", samples_round)
+print("sample :", samples_round)
 sample_time = time.time()-start
 label_time = 0
 partition_time = 0
 while len(subgraphs) > 0:
-    # print("Round", i, ":", subgraphs)
+    print("Round", i, ":", subgraphs)
     ancestors = {}
     descendants = {}
     graphs = []
@@ -195,7 +195,7 @@ while len(subgraphs) > 0:
     start = time.time()
     combined = label(ancestors, descendants)
     label_time += time.time()-start
-    # print("labels :", combined)
+    print("labels :", combined)
     start = time.time()
     subgraphs = graphs
     partition_time += time.time()-start
@@ -205,3 +205,6 @@ print("sample_time:", sample_time)
 print("label_time:", label_time)
 print("partition_time:", partition_time)
 print("total_time:", end-begin)
+# 1. add non-sample node to subgraph
+# 2. Save graph to txt file
+# 3. Improve partition function using hash sorting
