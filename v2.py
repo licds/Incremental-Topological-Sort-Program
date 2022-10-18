@@ -4,6 +4,7 @@ import time
 import pandas as pd
 import pickle
 import numpy as np
+from collections import defaultdict
 
 def sample_rate(power, n):
     sample_p = (math.log(n))**power/n
@@ -49,13 +50,10 @@ def labeldict(nodes, edges):
     return adict, ddict
 
 def labeling(nodes, samples, r, adict, ddict):
-    ancestors = {}
-    descendants = {}
+    ancestors = defaultdict(list)
+    descendants = defaultdict(list)
     unique = set(nodes)
     samples = list(unique.intersection(set(samples[r])))
-    for node in nodes:
-        ancestors[node] = []
-        descendants[node] = []
     for s in samples:
         notvisit_ans = list(set(adict[s].copy()).intersection(unique))
         notvisit_des = list(set(ddict[s].copy()).intersection(unique))
@@ -71,25 +69,21 @@ def labeling(nodes, samples, r, adict, ddict):
             notvisit_des.extend(list(set(ddict[node]).intersection(unique)))
     return ancestors, descendants
 
-def label(ancestors, descendants):
+def label(ancestors, descendants, samples):
     keys = ancestors.keys()
     values = zip(ancestors.values(), descendants.values())
     combined = dict(zip(keys, values))
+    for sample in samples:
+        combined.pop(sample, None)
     return combined
-
-def partition_df(combined):
-    df = pd.DataFrame({'key':combined.keys(), 'value':combined.values()})
-    subgraphs = []
-    for val in list(map(pickle.loads, dict.fromkeys(map(pickle.dumps, list(df.value))))):
-        subgraph = list(df.key[df.value==val])
-        if len(subgraph) > 1:
-            subgraphs.append(subgraph)
-    return subgraphs
 
 def partition(combined):
     vals = np.array(list(combined.items()), dtype=object)
-    uniq, count = np.unique(vals[:,1], return_counts=True)
-    uniq = uniq[count > 1]
+    try:
+        uniq = np.unique(vals[:,1])
+    except:
+        return []
+    # uniq = uniq[count > 1]
     subgraphs = []
     for val in uniq:
         subgraph = []
@@ -130,38 +124,8 @@ def graph(types, n):
                     pass
         return nodes, edges
 
-
-##### Takes 0.13-0.14s for sampling 100000 nodes
-# sample_time = 0
-# for i in range(100):
-#     nodes = set(range(100000))
-#     start = time.time()
-#     newsample(nodes)
-#     end = time.time()
-#     sample_time += end-start
-# print("sample_time:", sample_time/100)
-
-##### Takes 1.4-1.5s for labeling 100000 nodes
-# label_time = 0
-# for i in range(10):
-#     samples_round = newsample(nodes)
-#     start = time.time()
-#     adict, ddict = labeldict(edges)
-#     ancestors, descendants = labeling(nodes, samples_round, 1,adict, ddict)
-#     end = time.time()
-#     label_time += end-start
-# print("label_time:", label_time/10)
-
-# nodes = set([0, 1, 2, 3, 4, 5, 6, 7])
-# edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7)]
-# samples_round = {}
-
-# samples_round[1] = [2, 3, 6]
-# samples_round[2] = [1, 4, 5]
-# adict, ddict = labeldict(nodes, edges)
-
 #### Graph Initialization ####
-n = 16 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+n = 10000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
 nodes, edges = graph('line', n) #line, perfect
 adict, ddict = labeldict(nodes, edges)
 
@@ -170,19 +134,23 @@ i = 1
 subgraphs = [nodes]
 start = time.time()
 samples_round = newsample(nodes)
-print("sample :", samples_round)
+samples_round[0] = []
+# samples_round[1] =[0,1,5,6]
+# samples_round[2] =[3]
+# samples_round[3] =[2,4,7]
+# print("sample :", samples_round)
 sample_time = time.time()-start
 label_time = 0
 partition_time = 0
 while len(subgraphs) > 0:
-    print("Round", i, ":", subgraphs)
+    # print("Round", i, ":", subgraphs)
     ancestors = {}
     descendants = {}
     graphs = []
     for subgraph in subgraphs:
         start = time.time()
         anc, des = labeling(subgraph, samples_round, i, adict, ddict)
-        combined = label(anc, des)
+        combined = label(anc, des, samples_round[i])
         label_time += time.time()-start
         start = time.time()
         graph = partition(combined)
@@ -193,9 +161,9 @@ while len(subgraphs) > 0:
         descendants.update(des)
         label_time += time.time()-start
     start = time.time()
-    combined = label(ancestors, descendants)
+    combined = label(ancestors, descendants, samples_round[i-1])
     label_time += time.time()-start
-    print("labels :", combined)
+    # print("labels :", combined)
     start = time.time()
     subgraphs = graphs
     partition_time += time.time()-start
@@ -204,7 +172,7 @@ end = time.time()
 print("sample_time:", sample_time)
 print("label_time:", label_time)
 print("partition_time:", partition_time)
+print("Difference:", end-begin-sample_time-label_time-partition_time)
 print("total_time:", end-begin)
-# 1. add non-sample node to subgraph
 # 2. Save graph to txt file
 # 3. Improve partition function using hash sorting
