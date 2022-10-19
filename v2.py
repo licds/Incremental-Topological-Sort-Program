@@ -5,6 +5,7 @@ import pandas as pd
 import pickle
 import numpy as np
 from collections import defaultdict
+from itertools import repeat
 
 def sample_rate(power, n):
     sample_p = (math.log(n))**power/n
@@ -50,8 +51,14 @@ def labeldict(nodes, edges):
     return adict, ddict
 
 def labeling(nodes, samples, r, adict, ddict):
-    ancestors = defaultdict(list)
-    descendants = defaultdict(list)
+    # empty = [[] for i in repeat(None, len(nodes))]
+    # ancestors = dict(zip(nodes, empty))
+    # descendants = dict(zip(nodes, empty))
+    ancestors = {}
+    descendants = {}
+    for node in nodes:
+        ancestors[node] = []
+        descendants[node] = []
     unique = set(nodes)
     samples = list(unique.intersection(set(samples[r])))
     for s in samples:
@@ -70,11 +77,10 @@ def labeling(nodes, samples, r, adict, ddict):
     return ancestors, descendants
 
 def label(ancestors, descendants, samples):
-    keys = ancestors.keys()
-    values = zip(ancestors.values(), descendants.values())
-    combined = dict(zip(keys, values))
-    for sample in samples:
-        combined.pop(sample, None)
+    keys = set(ancestors.keys()) - set(samples)
+    combined = {}
+    for key in keys:
+        combined[key] = (ancestors[key], descendants[key])
     return combined
 
 def partition(combined):
@@ -125,7 +131,7 @@ def graph(types, n):
         return nodes, edges
 
 #### Graph Initialization ####
-n = 10000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
 nodes, edges = graph('line', n) #line, perfect
 adict, ddict = labeldict(nodes, edges)
 
@@ -135,23 +141,28 @@ subgraphs = [nodes]
 start = time.time()
 samples_round = newsample(nodes)
 samples_round[0] = []
-# samples_round[1] =[0,1,5,6]
-# samples_round[2] =[3]
-# samples_round[3] =[2,4,7]
-# print("sample :", samples_round)
+samples_round[1] =[0,1,5,6]
+samples_round[2] =[3]
+samples_round[3] =[2,4,7]
+print("sample :", samples_round)
 sample_time = time.time()-start
-label_time = 0
+label_time1 = 0
+label_time2 = 0
+label_time3 = 0
+label_time4 = 0 
 partition_time = 0
 while len(subgraphs) > 0:
-    # print("Round", i, ":", subgraphs)
+    print("Round", i, ":", subgraphs)
     ancestors = {}
     descendants = {}
     graphs = []
     for subgraph in subgraphs:
         start = time.time()
         anc, des = labeling(subgraph, samples_round, i, adict, ddict)
+        label_time1 += time.time()-start
+        start = time.time()
         combined = label(anc, des, samples_round[i])
-        label_time += time.time()-start
+        label_time2 += time.time()-start
         start = time.time()
         graph = partition(combined)
         graphs.extend(graph)
@@ -159,20 +170,22 @@ while len(subgraphs) > 0:
         start = time.time()
         ancestors.update(anc)
         descendants.update(des)
-        label_time += time.time()-start
+        label_time3 += time.time()-start
     start = time.time()
     combined = label(ancestors, descendants, samples_round[i-1])
-    label_time += time.time()-start
-    # print("labels :", combined)
+    label_time4 += time.time()-start
+    print("labels :", combined)
     start = time.time()
     subgraphs = graphs
     partition_time += time.time()-start
     i += 1
 end = time.time()
 print("sample_time:", sample_time)
-print("label_time:", label_time)
+print("label_time1:", label_time1)
+print("label_time2:", label_time2)
+print("label_time3:", label_time3)
+print("label_time4:", label_time4)
 print("partition_time:", partition_time)
-print("Difference:", end-begin-sample_time-label_time-partition_time)
 print("total_time:", end-begin)
 # 2. Save graph to txt file
 # 3. Improve partition function using hash sorting
