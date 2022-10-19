@@ -31,23 +31,12 @@ def newsample(nodes):
         r += 1
     return samples_round
 
-def labeldict(nodes, edges):
-    adict = {}
-    ddict = {}
+def labeldict(edges):
+    adict = defaultdict(set)
+    ddict = defaultdict(set)
     for edge in edges:
-        if edge[0] in adict:
-            adict[edge[0]].append(edge[1])
-        else:
-            adict[edge[0]] = [edge[1]]
-        if edge[1] in ddict:
-            ddict[edge[1]].append(edge[0])
-        else:
-            ddict[edge[1]] = [edge[0]]
-    for node in nodes:
-        if node not in adict:
-            adict[node] = []
-        if node not in ddict:
-            ddict[node] = []
+        adict[edge[0]].add(edge[1])
+        ddict[edge[1]].add(edge[0])
     return adict, ddict
 
 def labeling(nodes, samples, r, adict, ddict):
@@ -60,24 +49,24 @@ def labeling(nodes, samples, r, adict, ddict):
         ancestors[node] = []
         descendants[node] = []
     unique = set(nodes)
-    samples = list(unique.intersection(set(samples[r])))
-    for s in samples:
-        notvisit_ans = list(set(adict[s].copy()).intersection(unique))
-        notvisit_des = list(set(ddict[s].copy()).intersection(unique))
+    sample = list(unique.intersection(samples[r]))
+    for s in sample:
+        notvisit_ans = list(adict[s].copy().intersection(unique))
+        notvisit_des = list(ddict[s].copy().intersection(unique))
         ancestors[s].append(s)
         descendants[s].append(s)
         while len(notvisit_ans) > 0:
             node = notvisit_ans.pop(0)
             ancestors[node].append(s)
-            notvisit_ans.extend(list(set(adict[node]).intersection(unique)))
+            notvisit_ans.extend(list(adict[node].intersection(unique)))
         while len(notvisit_des) > 0:
             node = notvisit_des.pop(0)
             descendants[node].append(s)
-            notvisit_des.extend(list(set(ddict[node]).intersection(unique)))
+            notvisit_des.extend(list(ddict[node].intersection(unique)))
     return ancestors, descendants
 
 def label(ancestors, descendants, samples):
-    keys = set(ancestors.keys()) - set(samples)
+    keys = set(ancestors.keys()) - samples
     combined = {}
     for key in keys:
         combined[key] = (ancestors[key], descendants[key])
@@ -131,20 +120,20 @@ def graph(types, n):
         return nodes, edges
 
 #### Graph Initialization ####
-n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+n = 32767 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
 nodes, edges = graph('line', n) #line, perfect
-adict, ddict = labeldict(nodes, edges)
+adict, ddict = labeldict(edges)
 
 begin = time.time()
 i = 1
 subgraphs = [nodes]
 start = time.time()
 samples_round = newsample(nodes)
-samples_round[0] = []
-samples_round[1] =[0,1,5,6]
-samples_round[2] =[3]
-samples_round[3] =[2,4,7]
-print("sample :", samples_round)
+samples_round[0] = set()
+# samples_round[1] =(0,1,5,6)
+# samples_round[2] =(3)
+# samples_round[3] =(2,4,7)
+# print("sample :", samples_round)
 sample_time = time.time()-start
 label_time1 = 0
 label_time2 = 0
@@ -152,7 +141,7 @@ label_time3 = 0
 label_time4 = 0 
 partition_time = 0
 while len(subgraphs) > 0:
-    print("Round", i, ":", subgraphs)
+    # print("Round", i, ":", subgraphs)
     ancestors = {}
     descendants = {}
     graphs = []
@@ -174,7 +163,7 @@ while len(subgraphs) > 0:
     start = time.time()
     combined = label(ancestors, descendants, samples_round[i-1])
     label_time4 += time.time()-start
-    print("labels :", combined)
+    # print("labels :", combined)
     start = time.time()
     subgraphs = graphs
     partition_time += time.time()-start
