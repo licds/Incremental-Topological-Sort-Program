@@ -39,30 +39,51 @@ def labeldict(edges):
         ddict[edge[1]].add(edge[0])
     return adict, ddict
 
-def labeling(nodes, samples, r, adict, ddict):
-    # empty = [[] for i in repeat(None, len(nodes))]
-    # ancestors = dict(zip(nodes, empty))
-    # descendants = dict(zip(nodes, empty))
+def labeling1(nodes, samples, r, adict, ddict):
     ancestors = {}
     descendants = {}
     for node in nodes:
         ancestors[node] = []
         descendants[node] = []
-    unique = set(nodes)
-    sample = list(unique.intersection(samples[r]))
-    for s in sample:
-        notvisit_ans = list(adict[s].copy().intersection(unique))
-        notvisit_des = list(ddict[s].copy().intersection(unique))
+    tempdict = {}
+    for k in nodes:
+        tempdict[k] = (adict[k].intersection(nodes), ddict[k].intersection(nodes))
+    samples = nodes.intersection(samples[r])
+    for s in samples:
+        notvisit_ans = tempdict[s][0].copy()
+        notvisit_des = tempdict[s][1].copy()
         ancestors[s].append(s)
         descendants[s].append(s)
         while len(notvisit_ans) > 0:
-            node = notvisit_ans.pop(0)
+            node = notvisit_ans.pop()
             ancestors[node].append(s)
-            notvisit_ans.extend(list(adict[node].intersection(unique)))
+            notvisit_ans.update(tempdict[node][0])
         while len(notvisit_des) > 0:
-            node = notvisit_des.pop(0)
+            node = notvisit_des.pop()
             descendants[node].append(s)
-            notvisit_des.extend(list(ddict[node].intersection(unique)))
+            notvisit_des.update(tempdict[node][1])
+    return ancestors, descendants
+
+def labeling(nodes, samples, r, adict, ddict):
+    ancestors = {}
+    descendants = {}
+    for node in nodes:
+        ancestors[node] = []
+        descendants[node] = []
+    samples = nodes.intersection(samples[r])
+    for s in samples:
+        notvisit_ans = adict[s].intersection(nodes)
+        notvisit_des = ddict[s].intersection(nodes)
+        ancestors[s].append(s)
+        descendants[s].append(s)
+        while len(notvisit_ans) > 0:
+            node = notvisit_ans.pop()
+            ancestors[node].append(s)
+            notvisit_ans.update(adict[node].intersection(nodes))
+        while len(notvisit_des) > 0:
+            node = notvisit_des.pop()
+            descendants[node].append(s)
+            notvisit_des.update(ddict[node].intersection(nodes))
     return ancestors, descendants
 
 def label(ancestors, descendants, samples):
@@ -78,19 +99,16 @@ def partition(combined):
         uniq = np.unique(vals[:,1])
     except:
         return []
-    # uniq = uniq[count > 1]
     subgraphs = []
     for val in uniq:
-        subgraph = []
+        subgraph = set()
         for row in range(len(vals)):
             if vals[row,1] == val:
-                subgraph.append(vals[row,0])
+                subgraph.add(vals[row,0])
         subgraphs.append(subgraph)
     return subgraphs
 
 def graph(types, n):
-    nodes = []
-    edges = []
     if types == 'line':
         nodes = set(range(n))
         edges = []
@@ -99,6 +117,7 @@ def graph(types, n):
         return nodes, edges
     elif types == 'perfect':
         layers = []
+        edges = []
         nodes = set(range(1,n+1))
         x = 1
         y = 2
@@ -119,9 +138,99 @@ def graph(types, n):
                     pass
         return nodes, edges
 
+def test1(adict, ddict, samples_round, trials):
+    label_time1 = 0
+    label_time2 = 0
+    label_time3 = 0
+    label_time4 = 0
+    partition_time = 0 
+    total_time = 0
+    for i in range(trials):
+        begin = time.time()
+        i = 1
+        subgraphs = [nodes]
+        while len(subgraphs) > 0:
+            ancestors = {}
+            descendants = {}
+            graphs = []
+            for subgraph in subgraphs:
+                start = time.time()
+                anc, des = labeling(subgraph, samples_round, i, adict, ddict)
+                label_time1 += time.time()-start
+                start = time.time()
+                combined = label(anc, des, samples_round[i])
+                label_time2 += time.time()-start
+                start = time.time()
+                graph = partition(combined)
+                graphs.extend(graph)
+                partition_time += time.time()-start
+                start = time.time()
+                ancestors.update(anc)
+                descendants.update(des)
+                label_time3 += time.time()-start
+            start = time.time()
+            combined = label(ancestors, descendants, samples_round[i-1])
+            label_time4 += time.time()-start
+            start = time.time()
+            subgraphs = graphs
+            partition_time += time.time()-start
+            i += 1
+        total_time += time.time()-begin
+    print("label_time1:", label_time1/trials)
+    print("label_time2:", label_time2/trials)
+    print("label_time3:", label_time3/trials)
+    print("label_time4:", label_time4/trials)
+    print("partition_time:", partition_time/trials)
+    print("total_time:", total_time/trials)
+
+def test2(adict, ddict, samples_round, trials):
+    label_time1 = 0
+    label_time2 = 0
+    label_time3 = 0
+    label_time4 = 0
+    partition_time = 0 
+    total_time = 0
+    for i in range(trials):
+        begin = time.time()
+        i = 1
+        subgraphs = [nodes]
+        while len(subgraphs) > 0:
+            ancestors = {}
+            descendants = {}
+            graphs = []
+            for subgraph in subgraphs:
+                start = time.time()
+                anc, des = labeling1(subgraph, samples_round, i, adict, ddict)
+                label_time1 += time.time()-start
+                start = time.time()
+                combined = label(anc, des, samples_round[i])
+                label_time2 += time.time()-start
+                start = time.time()
+                graph = partition(combined)
+                graphs.extend(graph)
+                partition_time += time.time()-start
+                start = time.time()
+                ancestors.update(anc)
+                descendants.update(des)
+                label_time3 += time.time()-start
+            start = time.time()
+            combined = label(ancestors, descendants, samples_round[i-1])
+            label_time4 += time.time()-start
+            start = time.time()
+            subgraphs = graphs
+            partition_time += time.time()-start
+            i += 1
+        total_time += time.time()-begin
+    print("label_time1:", label_time1/trials)
+    print("label_time2:", label_time2/trials)
+    print("label_time3:", label_time3/trials)
+    print("label_time4:", label_time4/trials)
+    print("partition_time:", partition_time/trials)
+    print("total_time:", total_time/trials)
+
 #### Graph Initialization ####
-n = 32767 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
-nodes, edges = graph('line', n) #line, perfect
+n = 7 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+nodes, edges = graph('perfect', n) #line, perfect
 adict, ddict = labeldict(edges)
 
 begin = time.time()
@@ -130,10 +239,10 @@ subgraphs = [nodes]
 start = time.time()
 samples_round = newsample(nodes)
 samples_round[0] = set()
-# samples_round[1] =(0,1,5,6)
-# samples_round[2] =(3)
-# samples_round[3] =(2,4,7)
-# print("sample :", samples_round)
+samples_round[1] = set([2,4])
+samples_round[2] = set([1,3,5,7])
+samples_round[3] = set([0,6])
+print("sample :", samples_round)
 sample_time = time.time()-start
 label_time1 = 0
 label_time2 = 0
@@ -141,13 +250,13 @@ label_time3 = 0
 label_time4 = 0 
 partition_time = 0
 while len(subgraphs) > 0:
-    # print("Round", i, ":", subgraphs)
+    print("Round", i, ":", subgraphs)
     ancestors = {}
     descendants = {}
     graphs = []
     for subgraph in subgraphs:
         start = time.time()
-        anc, des = labeling(subgraph, samples_round, i, adict, ddict)
+        anc, des = labeling1(subgraph, samples_round, i, adict, ddict)
         label_time1 += time.time()-start
         start = time.time()
         combined = label(anc, des, samples_round[i])
@@ -163,7 +272,7 @@ while len(subgraphs) > 0:
     start = time.time()
     combined = label(ancestors, descendants, samples_round[i-1])
     label_time4 += time.time()-start
-    # print("labels :", combined)
+    print("labels :", combined)
     start = time.time()
     subgraphs = graphs
     partition_time += time.time()-start
@@ -178,3 +287,15 @@ print("partition_time:", partition_time)
 print("total_time:", end-begin)
 # 2. Save graph to txt file
 # 3. Improve partition function using hash sorting
+
+
+
+#### Testing Block ####
+# n = 8000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+# nodes, edges = graph('line', n) #line, perfect
+# adict, ddict = labeldict(edges)
+# samples_round = newsample(nodes)
+# samples_round[0] = set()
+# test1(adict, ddict, samples_round, 50)
+# print("###########")
+# test2(adict, ddict, samples_round, 50)
