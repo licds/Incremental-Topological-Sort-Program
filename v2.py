@@ -5,13 +5,11 @@ import pandas as pd
 import pickle
 import numpy as np
 from collections import defaultdict
-from itertools import repeat
 
 def sample_rate(power, n):
     sample_p = (math.log(n))**power/n
     return sample_p
 
-# Approach 2 ######## BETTER ########
 def sample(nodes, sample_p):
     S = set()
     for node in nodes:
@@ -159,12 +157,26 @@ def test(adict, ddict, out, samples_round, trials):
     print("total_time:", total_time/trials)
 
 #### Testing Block ####
-n = 7 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
-nodes, edges = graph('perfect', n) #line, perfect
+# n = 100000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+# nodes, edges = graph('perfect', n) #line, perfect
+# with open('perfect_graph.txt', 'w') as f:
+#     f.write(str(nodes))
+#     f.write('\n')
+#     f.write(str(edges))
+with open('line_graph8.txt') as f:
+    nodes_line = f.readline()
+    nodes = eval(nodes_line)
+    edges_line = f.readline()
+    edges = eval(edges_line)
+
 adict, ddict = labeldict(edges)
 samples_round = newsample(nodes)
 samples_round[0] = set()
-test(adict, ddict, True, samples_round, 1)
+# samples_round[1] = set([2,4])
+# samples_round[2] = set([1,3,5,7])
+# samples_round[3] = set([0,6])
+# print("sample :", samples_round)
+test(adict, ddict, False, samples_round, 1)
 
 
 
@@ -229,7 +241,6 @@ test(adict, ddict, True, samples_round, 1)
 # print("partition_time:", partition_time)
 # print("total_time:", end-begin)
 # 2. Save graph to txt file
-# 3. Improve partition function using hash sorting
 
 
 
