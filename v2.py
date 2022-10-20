@@ -40,12 +40,12 @@ def labeldict(edges):
 def labeling(nodes, samples, r, adict, ddict):
     ancestors = {}
     descendants = {}
+    tempdict = {}
+    # O(V)
     for node in nodes:
         ancestors[node] = []
         descendants[node] = []
-    tempdict = {}
-    for k in nodes:
-        tempdict[k] = (adict[k].intersection(nodes), ddict[k].intersection(nodes))
+        tempdict[node] = (adict[node].intersection(nodes), ddict[node].intersection(nodes))
     samples = nodes.intersection(samples[r])
     for s in samples:
         notvisit_ans = tempdict[s][0].copy()
@@ -157,26 +157,28 @@ def test(adict, ddict, out, samples_round, trials):
     print("total_time:", total_time/trials)
 
 #### Testing Block ####
-# n = 100000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
-# nodes, edges = graph('perfect', n) #line, perfect
+n = 7 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+nodes, edges = graph('perfect', n) #line, perfect
+
 # with open('perfect_graph.txt', 'w') as f:
 #     f.write(str(nodes))
 #     f.write('\n')
 #     f.write(str(edges))
-with open('line_graph8.txt') as f:
-    nodes_line = f.readline()
-    nodes = eval(nodes_line)
-    edges_line = f.readline()
-    edges = eval(edges_line)
+# with open('line_graph100000.txt') as f:
+#     nodes_line = f.readline()
+#     nodes = eval(nodes_line)
+#     edges_line = f.readline()
+#     edges = eval(edges_line)
 
 adict, ddict = labeldict(edges)
 samples_round = newsample(nodes)
 samples_round[0] = set()
-# samples_round[1] = set([2,4])
-# samples_round[2] = set([1,3,5,7])
-# samples_round[3] = set([0,6])
-# print("sample :", samples_round)
-test(adict, ddict, False, samples_round, 1)
+samples_round[1] = set([2,4])
+samples_round[2] = set([1,3,5,7])
+samples_round[3] = set([0,6])
+print("sample :", samples_round)
+test(adict, ddict, True, samples_round, 1)
+
 
 
 
