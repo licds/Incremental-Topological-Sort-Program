@@ -1,9 +1,7 @@
 import math
 import random
 import time
-import pandas as pd
 import pickle
-import numpy as np
 from collections import defaultdict
 
 def sample_rate(power, n):
@@ -158,7 +156,7 @@ def test(adict, ddict, out, samples_round, trials):
 
 #### Testing Block ####
 n = 100000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
-nodes, edges = graph('perfect', n) #line, perfect
+nodes, edges = graph('line', n) #line, perfect
 
 # with open('perfect_graph.txt', 'w') as f:
 #     f.write(str(nodes))
