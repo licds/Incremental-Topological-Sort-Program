@@ -157,7 +157,7 @@ def test(adict, ddict, out, samples_round, trials):
     print("total_time:", total_time/trials)
 
 #### Testing Block ####
-n = 7 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+n = 100000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
 nodes, edges = graph('perfect', n) #line, perfect
 
 # with open('perfect_graph.txt', 'w') as f:
@@ -173,11 +173,11 @@ nodes, edges = graph('perfect', n) #line, perfect
 adict, ddict = labeldict(edges)
 samples_round = newsample(nodes)
 samples_round[0] = set()
-samples_round[1] = set([2,4])
-samples_round[2] = set([1,3,5,7])
-samples_round[3] = set([0,6])
-print("sample :", samples_round)
-test(adict, ddict, True, samples_round, 1)
+# samples_round[1] = set([2,4])
+# samples_round[2] = set([1,3,5,7])
+# samples_round[3] = set([0,6])
+# print("sample :", samples_round)
+test(adict, ddict, False, samples_round, 1)
 
 
 
