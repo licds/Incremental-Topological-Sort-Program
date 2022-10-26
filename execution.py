@@ -1,25 +1,18 @@
+from cmath import log
 import math
 import matplotlib.pyplot as plt
 import networkx as nx
 import time
 import numpy as np
 import taichi as ti
-from randomDAGGeneration import ER
-from algorithm import *
+from DAG1 import ER
+from algorithm1 import *
 
 # Accelerate runtime through taichi
-ti.init(arch=ti.gpu)
+# ti.init(arch=ti.gpu)
 
 ################################# Number of nodes and probability for edges, INPUT HERE #################################
-<<<<<<< HEAD:execution.py
-<<<<<<< HEAD:execution.py
-n = 100
-=======
-n = 10
->>>>>>> parent of 910000d (Labeling fixed):execution1.py
-=======
-n = 10
->>>>>>> parent of 910000d (Labeling fixed):execution1.py
+n = 10000
 p = 0.2
 
 ################################# Probability for sampling #################################
@@ -32,38 +25,35 @@ sample_p = sample_rate(1, n)
 print("##### RUNTIME ANALYSIS #####")
 # Generate a random graph with ER
 start_time = time.time()
-G = ER(n, p)
+# G = ER(n, p)
 print("--- %s seconds for generating a graph using ER ---" % (time.time() - start_time))
 
 # Sample nodes
+nodes = list(range(100000))
 start_time = time.time()
-S = sample(G, sample_p)
+S = sample(nodes, sample_p)
 print("--- %s seconds for sampling a graph ---" % (time.time() - start_time))
-
+"""
 # Label every nodes with ancestors and descendants, as well as intersection with sample S
 start_time = time.time()
-labeling(G, S)
+labeling(G, G.nodes, S)
 print("--- %s seconds for labeling each node ---" % (time.time() - start_time))
 
 start_time = time.time()
-subgraphs = partition(G)
+subgraphs = partition(G.nodes)
 print("--- %s seconds for breaking graph into subgraphs ---" % (time.time() - start_time))
 
-print_info(S, G, subgraphs)
+# print_info(S, G, subgraphs)
+start_time = time.time()
+details = []
+graphs = []
+samples = []
+rounds(details, samples, graphs, G, G.nodes)
+print("--- %s seconds for doing rounds ---" % (time.time() - start_time))
 
-# Draw graph
+decode_graphs(graphs)
+decode_samples(samples)
+#decode_details(details)
 
-labeldict = {}
-for node in G.nodes:
-    labeldict[node] = node.data
-pos = nx.spring_layout(G)
-nx.draw_networkx(G, pos, labels=labeldict)
-plt.title("Random Graph Generation Example")
-<<<<<<< HEAD:execution.py
-plt.show()
-<<<<<<< HEAD:execution.py
-=======
-plt.show()
->>>>>>> parent of 910000d (Labeling fixed):execution1.py
-=======
->>>>>>> parent of 910000d (Labeling fixed):execution1.py
+#draw(G)
+"""
