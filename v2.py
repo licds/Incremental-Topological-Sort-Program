@@ -4,6 +4,8 @@ import time
 import pickle
 from collections import defaultdict
 
+from sklearn.semi_supervised import LabelSpreading
+
 def sample_rate(power, n):
     sample_p = (math.log(n))**power/n
     return sample_p
@@ -105,11 +107,8 @@ def graph(types, n):
                     pass
         return nodes, edges
 
-def test(adict, ddict, out, samples_round, trials):
-    label_time1 = 0
-    label_time2 = 0
-    label_time3 = 0
-    label_time4 = 0
+def test(nodes, adict, ddict, out, samples_round, trials, labels_round):
+    label_time = 0
     partition_time = 0 
     total_time = 0
     for i in range(trials):
@@ -125,10 +124,10 @@ def test(adict, ddict, out, samples_round, trials):
             for subgraph in subgraphs:
                 start = time.time()
                 anc, des = labeling(subgraph, samples_round, i, adict, ddict)
-                label_time1 += time.time()-start
+                label_time += time.time()-start
                 start = time.time()
                 combined = label(anc, des, samples_round[i])
-                label_time2 += time.time()-start
+                label_time += time.time()-start
                 start = time.time()
                 graph = partition(combined)
                 graphs.extend(graph)
@@ -136,111 +135,64 @@ def test(adict, ddict, out, samples_round, trials):
                 start = time.time()
                 ancestors.update(anc)
                 descendants.update(des)
-                label_time3 += time.time()-start
+                label_time += time.time()-start
             start = time.time()
             combined = label(ancestors, descendants, samples_round[i-1])
-            label_time4 += time.time()-start
+            label_time += time.time()-start
             if out == True:
                 print("labels :", combined)
+            labels_round[i] = combined
             start = time.time()
             subgraphs = graphs
             partition_time += time.time()-start
             i += 1
         total_time += time.time()-begin
-    print("label_time1:", label_time1/trials)
-    print("label_time2:", label_time2/trials)
-    print("label_time3:", label_time3/trials)
-    print("label_time4:", label_time4/trials)
+    print("label_time:", label_time/trials)
     print("partition_time:", partition_time/trials)
     print("total_time:", total_time/trials)
 
 #### Testing Block ####
-n = 100000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
-nodes, edges = graph('line', n) #line, perfect
+# n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+# # nodes, edges = graph('line', n) #line, perfect
+# nodes = set(range(n))
+# edges = [(0,1),(1,2),(2,3),(4,5),(5,6),(6,7)]
+# labels_round = {}
+# # with open('perfect_graph.txt', 'w') as f:
+# #     f.write(str(nodes))
+# #     f.write('\n')
+# #     f.write(str(edges))
+# # with open('line_graph100000.txt') as f:
+# #     nodes_line = f.readline()
+# #     nodes = eval(nodes_line)
+# #     edges_line = f.readline()
+# #     edges = eval(edges_line)
 
-# with open('perfect_graph.txt', 'w') as f:
-#     f.write(str(nodes))
-#     f.write('\n')
-#     f.write(str(edges))
-# with open('line_graph100000.txt') as f:
-#     nodes_line = f.readline()
-#     nodes = eval(nodes_line)
-#     edges_line = f.readline()
-#     edges = eval(edges_line)
-
-adict, ddict = labeldict(edges)
-samples_round = newsample(nodes)
-samples_round[0] = set()
-# samples_round[1] = set([2,4])
-# samples_round[2] = set([1,3,5,7])
-# samples_round[3] = set([0,6])
-# print("sample :", samples_round)
-test(adict, ddict, False, samples_round, 1)
-
-
-
-
-
-
-
-#### Graph Initialization ####
-# n = 15 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
-# nodes, edges = graph('perfect', n) #line, perfect
 # adict, ddict = labeldict(edges)
-
-# begin = time.time()
-# i = 1
-# subgraphs = [nodes]
-# start = time.time()
 # samples_round = newsample(nodes)
 # samples_round[0] = set()
-# # samples_round[1] = set([2,4])
-# # samples_round[2] = set([1,3,5,7])
-# # samples_round[3] = set([0,6])
+# samples_round[1] = set([0, 7])
+# samples_round[2] = set([1,4,5,6])
+# samples_round[3] = set([2,3])
 # print("sample :", samples_round)
-# sample_time = time.time()-start
-# label_time1 = 0
-# label_time2 = 0
-# label_time3 = 0
-# label_time4 = 0 
-# partition_time = 0
-# while len(subgraphs) > 0:
-#     print("Round", i, ":", subgraphs)
-#     ancestors = {}
-#     descendants = {}
-#     graphs = []
-#     for subgraph in subgraphs:
-#         start = time.time()
-#         anc, des = labeling(subgraph, samples_round, i, adict, ddict)
-#         label_time1 += time.time()-start
-#         start = time.time()
-#         combined = label(anc, des, samples_round[i])
-#         label_time2 += time.time()-start
-#         start = time.time()
-#         graph = partition(combined)
-#         graphs.extend(graph)
-#         partition_time += time.time()-start
-#         start = time.time()
-#         ancestors.update(anc)
-#         descendants.update(des)
-#         label_time3 += time.time()-start
-#     start = time.time()
-#     combined = label(ancestors, descendants, samples_round[i-1])
-#     label_time4 += time.time()-start
-#     print("labels :", combined)
-#     start = time.time()
-#     subgraphs = graphs
-#     partition_time += time.time()-start
-#     i += 1
-# end = time.time()
-# print("sample_time:", sample_time)
-# print("label_time1:", label_time1)
-# print("label_time2:", label_time2)
-# print("label_time3:", label_time3)
-# print("label_time4:", label_time4)
-# print("partition_time:", partition_time)
-# print("total_time:", end-begin)
-# 2. Save graph to txt file
+# test(adict, ddict, True, samples_round, 1, labels_round)
+# # print("labels_round :", labels_round)
+# print("#################################################")
+
+# n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+# nodes, edges = graph('line', n) #line, perfect
+# adict, ddict = labeldict(edges)
+# samples_round = newsample(nodes)
+# samples_round[0] = set()
+# samples_round[1] = set([0, 7])
+# samples_round[2] = set([1,4,5,6])
+# samples_round[3] = set([2,3])
+
+# print("sample :", samples_round)
+# test(adict, ddict, True, samples_round, 1, labels_round)
+# # print("labels_round :", labels_round)
+
+
+
 
 
 
