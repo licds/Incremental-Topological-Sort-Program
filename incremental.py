@@ -1,4 +1,5 @@
 from v2 import *
+import copy
 
 def modify_first_layer(label_dict, adict, ddict, edge):
     adict[edge[0]].add(edge[1])
@@ -56,23 +57,166 @@ def update_all(label_dict, adict, ddict, edge, samples):
     # print("updated", label_dict)
     return label_dict
 
-n = 100000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+def newupdate(label_dict, adict, ddict, edge, samples):
+    new_adict = adict.copy()
+    new_ddict = ddict.copy()
+    new_adict[edge[0]].add(edge[1])
+    new_ddict[edge[1]].add(edge[0])
+    new_label_dict = copy.deepcopy(label_dict)
+    
+    anc_update = set()
+    dec_update = set()
+    changed_nodes = set()
+    edge_nodes = set()
+    edge_nodes.add(edge[0])
+    edge_nodes.add(edge[1])
+    # First layer
+    if new_label_dict[1][edge[0]][0] != tuple():
+        anc_update = set(new_adict[edge[0]])
+        wait = set(new_adict[edge[0]])
+        while len(wait) > 0:
+            for node in new_adict[wait.pop()]:
+                anc_update.add(node)
+                wait.add(node)
+    if new_label_dict[1][edge[1]][1] != tuple():
+        dec_update = set(new_ddict[edge[1]])
+        wait = set(new_ddict[edge[1]])
+        while len(wait) > 0:
+            for node in new_ddict[wait.pop()]:
+                dec_update.add(node)
+                wait.add(node)
+
+    if anc_update != set():
+        for node in anc_update:
+            new_label_dict[1][node] = (tuple(set(new_label_dict[1][node][0]).union(set(new_label_dict[1][edge[0]][0]))), new_label_dict[1][node][1])
+            if new_label_dict[1][node] != label_dict[1][node]:
+                changed_nodes.add(node)
+    if dec_update != set():
+        for node in dec_update:
+            new_label_dict[1][node] = (new_label_dict[1][node][0], tuple(set(new_label_dict[1][node][1]).union(set(new_label_dict[1][edge[1]][1]))))
+            if new_label_dict[1][node] != label_dict[1][node]:
+                changed_nodes.add(node)
+    
+    if changed_nodes == set():
+        changed_nodes.add(edge_nodes)
+    changed_nodes_copy = changed_nodes.copy()
+    changed_nodes = set() 
+    for node in changed_nodes_copy:
+        alist = adict[node]
+        dlist = ddict[node]
+        for anc in alist:
+            if label_dict[1][anc] != label_dict[1][node] and new_label_dict[1][anc] == new_label_dict[1][node]:
+                anc_update = anc_neighbor(anc, new_adict) - samples[1]
+                for anc_node in anc_update:
+                    new_label_dict[2][anc_node] = (tuple(set(new_label_dict[2][anc_node][0]).union(set(new_label_dict[2][node][0]))), new_label_dict[2][anc_node][1])
+                    if new_label_dict[2][anc_node] != label_dict[2][anc_node]:
+                        changed_nodes.add(anc_node)
+            if label_dict[1][anc] == label_dict[1][node] and new_label_dict[1][anc] != new_label_dict[1][node]:
+                anc_update = anc_neighbor(anc, new_adict) - samples[1]
+                for anc_node in anc_update:
+                    new_label_dict[2][anc_node] = (tuple(set(new_label_dict[2][anc_node][0]).difference(set(new_label_dict[2][node][0]))), new_label_dict[2][anc_node][1])
+                    if new_label_dict[2][anc_node] != label_dict[2][anc_node]:
+                        changed_nodes.add(anc_node)
+        for dec in dlist:
+            if label_dict[1][dec] != label_dict[1][node] and new_label_dict[1][dec] == new_label_dict[1][node]:
+                dec_update = dec_neighbor(dec, new_ddict) - samples[1]
+                for des_node in dec_update:
+                    new_label_dict[2][des_node] = (new_label_dict[2][des_node][0], tuple(set(new_label_dict[2][des_node][1]).union(set(new_label_dict[2][node][1]))))
+                    if new_label_dict[2][des_node] != label_dict[2][des_node]:
+                        changed_nodes.add(des_node)
+            if label_dict[1][dec] == label_dict[1][node] and new_label_dict[1][dec] != new_label_dict[1][node]:
+                dec_update = dec_neighbor(dec, new_ddict) - samples[1]
+                for des_node in dec_update:
+                    new_label_dict[2][des_node] = (new_label_dict[2][des_node][0], tuple(set(new_label_dict[2][des_node][1]).difference(set(new_label_dict[2][node][1]))))
+                    if new_label_dict[2][des_node] != label_dict[2][des_node]:
+                        changed_nodes.add(des_node)
+        print("new_label_dict", new_label_dict)
+        print("changed_nodes 2", changed_nodes)
+    changed_nodes_copy = changed_nodes.copy()
+    changed_nodes = set() 
+    for node in changed_nodes_copy:
+        print("node", node)
+        alist = adict[node] - samples[2] - samples[1]
+        print("alist", alist)
+        dlist = ddict[node] - samples[2] - samples[1]
+        print("dlist", dlist)
+        for anc in alist:
+            if label_dict[2][anc] != label_dict[2][node] and new_label_dict[2][anc] == new_label_dict[2][node]:
+                anc_update = anc_neighbor(anc, new_adict)
+                for anc_node in anc_update:
+                    new_label_dict[3][anc_node] = (tuple(set(new_label_dict[3][anc_node][0]).union(set(new_label_dict[3][node][0]))), new_label_dict[3][anc_node][1])
+                    if new_label_dict[3][anc_node] != label_dict[3][anc_node]:
+                        changed_nodes.add(anc_node)
+            if label_dict[2][anc] == label_dict[2][node] and new_label_dict[2][anc] != new_label_dict[2][node]:
+                print("anc", anc)
+                anc_update = anc_neighbor(anc, new_adict)
+                print("anc_update:", anc_update)
+                for anc_node in anc_update:
+                    new_label_dict[3][anc_node] = (tuple(set(new_label_dict[3][anc_node][0]).difference(set(new_label_dict[3][node][0]))), new_label_dict[3][anc_node][1])
+                    if new_label_dict[3][anc_node] != label_dict[3][anc_node]:
+                        changed_nodes.add(anc_node)
+        for dec in dlist:
+            if label_dict[2][dec] != label_dict[2][node] and new_label_dict[2][dec] == new_label_dict[2][node]:
+                dec_update = dec_neighbor(dec, new_ddict)
+                for des_node in dec_update:
+                    new_label_dict[3][des_node] = (new_label_dict[3][des_node][0], tuple(set(new_label_dict[3][des_node][1]).union(set(new_label_dict[3][node][1]))))
+                    if new_label_dict[3][des_node] != label_dict[3][des_node]:
+                        changed_nodes.add(des_node)
+            if label_dict[2][dec] == label_dict[2][node] and new_label_dict[2][dec] != new_label_dict[2][node]:
+                print("dec", dec)
+                dec_update = dec_neighbor(dec, new_ddict)
+                print("dec_update:", dec_update)
+                for des_node in dec_update:
+                    new_label_dict[3][des_node] = (new_label_dict[3][des_node][0], tuple(set(new_label_dict[3][des_node][1]).difference(set(new_label_dict[3][node][1]))))
+                    if new_label_dict[3][des_node] != label_dict[3][des_node]:
+                        changed_nodes.add(des_node)
+    print("new_label_dict", new_label_dict)
+    print("changed_nodes 3", changed_nodes)
+        
+def anc_neighbor(node, adict):
+    anc = set()
+    anc.add(node)
+    wait = set()
+    wait.add(node)
+    while len(wait) > 0:
+        for n in adict[wait.pop()]:
+            anc.add(n)
+            wait.add(n)
+    return anc
+
+def dec_neighbor(node, ddict):
+    dec = set()
+    dec.add(node)
+    wait = set()
+    wait.add(node)
+    while len(wait) > 0:
+        for n in ddict[wait.pop()]:
+            dec.add(n)
+            wait.add(n)
+    return dec
+
+
+
+
+    
+
+n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
 nodes = set(range(n))
-edges = []
-# edges = [(0,1),(1,2),(2,7),(4,6),(5,6),(6,7)]
-for i in range(n//2-1):
-    edges.append((i, i+1))
-for i in range(n//2, n-1):
-    edges.append((i, i+1))
+# edges = []
+edges = [(0,1),(1,2),(4,6),(5,6),(6,7)]
+# for i in range(n//2-1):
+#     edges.append((i, i+1))
+# for i in range(n//2, n-1):
+#     edges.append((i, i+1))
 origin_round = {}
 
 adict, ddict = labeldict(edges)
 samples_round = newsample(nodes)
 samples_round[0] = set()
-# samples_round[1] = set([0,7])
-# samples_round[2] = set([1,4,5,6])
-# samples_round[3] = set([2,3])
-# print("sample :", samples_round)
+samples_round[1] = set([0,7])
+samples_round[2] = set([3,1,2])
+samples_round[3] = set([4,5,6])
+print("sample :", samples_round)
 test(nodes, adict, ddict, False, samples_round, 1, origin_round)
 
 # print("#################################################")
@@ -85,8 +229,14 @@ test(nodes, adict, ddict, False, samples_round, 1, origin_round)
 
 # print("#################################################")
 edge = (3,4)
-start = time.time()
-new = update_all(origin_round, adict, ddict, edge, samples_round)
-end = time.time()
-print("Update time :", end-start)
-# print("new :", new)
+# start = time.time()
+# new = update_all(origin_round, adict, ddict, edge, samples_round)
+# end = time.time()
+# print("Update time :", end-start)
+# print("#################################################")
+# for i in new.keys():
+#     print("Round :", i)
+#     print("labels :", new[i])
+#     print("")
+
+newupdate(origin_round, adict, ddict, edge, samples_round)

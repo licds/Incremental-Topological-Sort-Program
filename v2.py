@@ -66,7 +66,7 @@ def label(ancestors, descendants, samples):
     keys = set(ancestors.keys()) - samples
     combined = {}
     for key in keys:
-        combined[key] = (tuple(ancestors[key]), tuple(descendants[key]))
+        combined[key] = (tuple(set(ancestors[key])), tuple(set(descendants[key])))
     return combined
 
 def partition(combined):
