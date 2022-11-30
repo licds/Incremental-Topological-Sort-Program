@@ -66,14 +66,15 @@ def label(ancestors, descendants, samples):
     keys = set(ancestors.keys()) - samples
     combined = {}
     for key in keys:
-        combined[key] = (tuple(set(ancestors[key])), tuple(set(descendants[key])))
+        combined[key] = [set(ancestors[key]), set(descendants[key])]
     return combined
 
 def partition(combined):
     part_dict = defaultdict(set)
     parts = list(combined.items())
     for part in parts:
-        part_dict[part[1]].add(part[0])
+        a = (tuple(part[1][0]),tuple(part[1][1]))
+        part_dict[a].add(part[0])
     subgraphs = [set(part) for part in part_dict.values()]
     return subgraphs
 
@@ -178,18 +179,19 @@ def test(nodes, adict, ddict, out, samples_round, trials, labels_round):
 # # print("labels_round :", labels_round)
 # print("#################################################")
 
-# n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
-# nodes, edges = graph('line', n) #line, perfect
-# adict, ddict = labeldict(edges)
-# samples_round = newsample(nodes)
-# samples_round[0] = set()
-# samples_round[1] = set([0, 7])
-# samples_round[2] = set([1,4,5,6])
-# samples_round[3] = set([2,3])
+n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+nodes, edges = graph('line', n) #line, perfect
+adict, ddict = labeldict(edges)
+samples_round = newsample(nodes)
+labels_round = {}
+samples_round[0] = set()
+samples_round[1] = set([0, 7])
+samples_round[2] = set([1,4,5,6])
+samples_round[3] = set([2,3])
 
-# print("sample :", samples_round)
-# test(adict, ddict, True, samples_round, 1, labels_round)
-# # print("labels_round :", labels_round)
+print("sample :", samples_round)
+test(nodes, adict, ddict, True, samples_round, 1, labels_round)
+print("labels_round :", labels_round)
 
 
 
