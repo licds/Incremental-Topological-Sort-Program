@@ -1,5 +1,6 @@
 from v2 import *
 import copy
+import pandas as pd
 
 def layer(changed_nodes_copy,  completed_samples, r, new_adict, new_ddict, label_dict, new_label_dict, changed_nodes):
     neighbor_time = 0
@@ -161,13 +162,11 @@ def newupdate(label_dict, adict, ddict, edge, samples):
         total_changed.update(changed_nodes_copy)
         changed_nodes = set() 
         completed_samples = completed_samples.union(samples[i])
-    print("Neighbor time: ", neighbor_time)
 
-    print("Number of node changes: ", len(total_changed))
                     
     # for key in new_label_dict.keys():
     #     print(new_label_dict[key])
-    return new_label_dict
+    return new_label_dict, len(total_changed)
         
 def neighbor(node, dict, new_label, r, samples):
     neigh = set()
@@ -214,30 +213,30 @@ def neighbor(node, dict, new_label, r, samples):
 #     print("New round", i, ":", new_label[i])
 
 ### TESTING BLOCK
-n = 10000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
-nodes = set(range(n))
-edges = []
-for i in range(n//2-1):
-    edges.append((i, i+1))
-for i in range(n//2, n-1):
-    edges.append((i, i+1))
-origin_round = []
-origin_round.append([])
+# n = 10000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+# nodes = set(range(n))
+# edges = []
+# for i in range(n//2-1):
+#     edges.append((i, i+1))
+# for i in range(n//2, n-1):
+#     edges.append((i, i+1))
+# origin_round = []
+# origin_round.append([])
 
-adict, ddict = labeldict(edges)
-samples_round = newsample(nodes)
-samples_round[0] = set()
-for round in range(1, len(samples_round)):
-    print("Round", round, ":", len(samples_round[round]))
-test(nodes, adict, ddict, False, samples_round, 1, origin_round)
+# adict, ddict = labeldict(edges)
+# samples_round = newsample(nodes)
+# samples_round[0] = set()
+# for round in range(1, len(samples_round)):
+#     print("Round", round, ":", len(samples_round[round]))
+# test(nodes, adict, ddict, False, samples_round, 1, origin_round)
 
 
-edge = (n//2-1, n//2)
+# edge = (n//2-1, n//2)
 
-start = time.time()
-new_label = newupdate(origin_round, adict, ddict, edge, samples_round)
-end = time.time()
-print("Update time :", end-start)
+# start = time.time()
+# new_label = newupdate(origin_round, adict, ddict, edge, samples_round)
+# end = time.time()
+# print("Update time :", end-start)
 
 # for z in range(1, len(origin_round)+1):
 #     print("Round:",z)
@@ -251,3 +250,29 @@ print("Update time :", end-start)
 #     print("Sample", i, ":", samples_round[i])
 #     print("Origin Round", i, ":", origin_round[i])
 #     print("New round", i, ":", new_label[i])
+
+### TESTING BLOCK
+n = 10 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+nodes = set(range(n))
+wait_edges = []
+for i in range(n-1):
+    wait_edges.append((i, i+1))
+
+edges = []
+incremental_round = []
+incremental_round.append([])
+adict, ddict = labeldict(edges)
+samples_round = newsample(nodes)
+samples_round[0] = set()
+num_nodes_changed = 0
+
+test(nodes, adict, ddict, False, samples_round, 1, incremental_round)
+
+df = pd.DataFrame(columns=['Edge', 'Number of nodes changed', 'Incremental round'])
+
+while len(wait_edges) > 0:
+    edge = wait_edges.pop(random.randrange(len(wait_edges)))
+    incremental_round, num_nodes_changed = newupdate(incremental_round, adict, ddict, edge, samples_round)
+    df.loc[len(df.index)] = [edge, num_nodes_changed, incremental_round] 
+
+df.to_csv('incremental.csv', index=False)
