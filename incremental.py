@@ -1,6 +1,7 @@
 from v2 import *
 import copy
 import pandas as pd
+import os
 
 def layer(changed_nodes_copy,  completed_samples, r, new_adict, new_ddict, label_dict, new_label_dict, changed_nodes):
     neighbor_time = 0
@@ -252,27 +253,60 @@ def neighbor(node, dict, new_label, r, samples):
 #     print("New round", i, ":", new_label[i])
 
 ### TESTING BLOCK
-n = 10 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
-nodes = set(range(n))
-wait_edges = []
-for i in range(n-1):
-    wait_edges.append((i, i+1))
+def trials(n):
+    nodes = set(range(n))
+    wait_edges = []
+    for i in range(n-1):
+        wait_edges.append((i, i+1))
+    edges = []
+    incremental_round = []
+    incremental_round.append([])
+    adict, ddict = labeldict(edges)
+    samples_round = newsample(nodes)
+    samples_round[0] = set()
+    num_nodes_changed = 0
+    test(nodes, adict, ddict, False, samples_round, 1, incremental_round)
+    df = pd.DataFrame(columns=['Edge', 'Number of nodes changed'])
+    total_nodes = 0
+    while len(wait_edges) > 0:
+        edge = wait_edges.pop(random.randrange(len(wait_edges)))
+        incremental_round, num_nodes_changed = newupdate(incremental_round, adict, ddict, edge, samples_round)
+        total_nodes += num_nodes_changed
+        df.loc[len(df.index)] = [edge, num_nodes_changed] 
+    path = os.path.join('line_incremental', 'incremental_'+str(n)+'.csv')
+    df.to_csv(path, index=False)
+    print(total_nodes)
+    return total_nodes
 
-edges = []
-incremental_round = []
-incremental_round.append([])
-adict, ddict = labeldict(edges)
-samples_round = newsample(nodes)
-samples_round[0] = set()
-num_nodes_changed = 0
+# n = 1000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+# nodes = set(range(n))
+# wait_edges = []
+# for i in range(n-1):
+#     wait_edges.append((i, i+1))
 
-test(nodes, adict, ddict, False, samples_round, 1, incremental_round)
+# edges = []
+# incremental_round = []
+# incremental_round.append([])
+# adict, ddict = labeldict(edges)
+# samples_round = newsample(nodes)
+# samples_round[0] = set()
+# num_nodes_changed = 0
 
-df = pd.DataFrame(columns=['Edge', 'Number of nodes changed', 'Incremental round'])
+# test(nodes, adict, ddict, False, samples_round, 1, incremental_round)
 
-while len(wait_edges) > 0:
-    edge = wait_edges.pop(random.randrange(len(wait_edges)))
-    incremental_round, num_nodes_changed = newupdate(incremental_round, adict, ddict, edge, samples_round)
-    df.loc[len(df.index)] = [edge, num_nodes_changed, incremental_round] 
+# df = pd.DataFrame(columns=['Edge', 'Number of nodes changed'])
+
+# while len(wait_edges) > 0:
+#     edge = wait_edges.pop(random.randrange(len(wait_edges)))
+#     incremental_round, num_nodes_changed = newupdate(incremental_round, adict, ddict, edge, samples_round)
+#     df.loc[len(df.index)] = [edge, num_nodes_changed] 
+
+# df.to_csv('incremental.csv', index=False)
+
+df = pd.DataFrame(columns=['Edge', 'Number of nodes changed'])
+
+for n in range(100,5001,100):
+    total_nodes = trials(n)
+    df.loc[len(df.index)] = [n, total_nodes]
 
 df.to_csv('incremental.csv', index=False)

@@ -117,8 +117,8 @@ def test(nodes, adict, ddict, out, samples_round, trials, labels_round):
         i = 1
         subgraphs = [nodes]
         while len(subgraphs) > 0:
-            if out == True:
-                print("Round", i, ":", subgraphs)
+            # if out == True:
+            #     print("Round", i, ":", subgraphs)
             ancestors = {}
             descendants = {}
             graphs = []
@@ -140,17 +140,17 @@ def test(nodes, adict, ddict, out, samples_round, trials, labels_round):
             start = time.time()
             combined = label(ancestors, descendants, samples_round[i-1])
             label_time += time.time()-start
-            if out == True:
-                print("labels :", combined)
+            # if out == True:
+            #     print("labels :", combined)
             labels_round.append(combined)
             start = time.time()
             subgraphs = graphs
             partition_time += time.time()-start
             i += 1
         total_time += time.time()-begin
-    print("label_time:", label_time/trials)
-    print("partition_time:", partition_time/trials)
-    print("total_time:", total_time/trials)
+    # print("label_time:", label_time/trials)
+    # print("partition_time:", partition_time/trials)
+    # print("total_time:", total_time/trials)
 
 #### Testing Block ####
 # n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
