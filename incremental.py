@@ -1,64 +1,10 @@
 from v2 import *
 import copy
 
-def modify_first_layer(label_dict, adict, ddict, edge):
-    adict[edge[0]].add(edge[1])
-    ddict[edge[1]].add(edge[0])
-    atemp = adict[edge[0]].copy()
-    atemp.add(edge[0])
-    dtemp = ddict[edge[0]].copy()
-    dtemp.add(edge[0])
-    a_wait = []
-    d_wait = []
-    while len(atemp) > 0:
-        node = atemp.pop()
-        atemp.update(adict[node])
-        a_wait.append(node)
-    while len(dtemp) > 0:
-        node = dtemp.pop()
-        dtemp.update(ddict[node])
-        d_wait.append(node)
-    for node in a_wait:
-        a = set(label_dict[node][0]).union(set(label_dict[edge[0]][0]))
-        label_dict[node] = (a, label_dict[node][1])
-    for node in d_wait:
-        d = set(label_dict[node][1]).union(set(label_dict[edge[1]][1]))
-        label_dict[node] = (label_dict[node][0], d)
-    return label_dict
-
-def compare_partition(origin_partition, new_partition, edge):
-    refined = []
-    for part in new_partition:
-        if part not in origin_partition:
-            refined.append(part)
-        if edge[0] in part and edge[1] in part:
-            refined.append(part)
-    return refined
-
-def update_label(label_dict, refined, samples, r, adict, ddict):
-    for subgraph in refined:
-        anc, des = labeling(subgraph, samples, r, adict, ddict)
-        for node in subgraph:
-            if node not in samples[r-1]:
-                label_dict[r][node] = (anc[node], des[node])
-    return label_dict
-
-def update_all(label_dict, adict, ddict, edge, samples):
-    # print("origin", label_dict)
-    origin_round = label_dict.copy()
-    updated = defaultdict()
-    start = time.time()
-    updated[1] = modify_first_layer(label_dict[1], adict, ddict, edge)
-    print("modify first layer", time.time()-start)
-    refined = compare_partition(partition(origin_round[1]), partition(label_dict[1]), edge)
-    for r in range(2, len(samples)):
-        update_label(label_dict, refined, samples, r, adict, ddict)
-        refined = partition(label_dict[r])
-    # print("updated", label_dict)
-    return label_dict
-
 def layer(changed_nodes_copy,  completed_samples, r, new_adict, new_ddict, label_dict, new_label_dict, changed_nodes):
     neighbor_time = 0
+    dec_neighbors = defaultdict(list)
+    anc_neighbors = defaultdict(list)
     for node in changed_nodes_copy:
         decendant_list = new_adict[node] - completed_samples
         ancestor_list = new_ddict[node] - completed_samples
@@ -66,7 +12,9 @@ def layer(changed_nodes_copy,  completed_samples, r, new_adict, new_ddict, label
             # Getting all the descendants of the node excluding sampled nodes
             start = time.time()
             # Find all the neighbors of the decendant
-            dec_update = neighbor(dec, new_adict, new_label_dict, r-2, completed_samples) - completed_samples
+            if dec not in dec_neighbors:
+                dec_neighbors[dec] = neighbor(dec, new_adict, new_label_dict, r-2, completed_samples) - completed_samples
+            dec_update = dec_neighbors[dec]
             neighbor_time += time.time() - start
             
             # Check if the decendant is in the same subgraph with the node in the previous round before we add the edge
@@ -107,7 +55,9 @@ def layer(changed_nodes_copy,  completed_samples, r, new_adict, new_ddict, label
         for anc in ancestor_list:
             # Getting all the ancestors of the node excluding sampled nodes
             start = time.time()
-            anc_update = neighbor(anc, new_ddict, new_label_dict, r-2, completed_samples) - completed_samples
+            if anc not in anc_neighbors:
+                anc_neighbors[anc] = neighbor(anc, new_ddict, new_label_dict, r-2, completed_samples) - completed_samples
+            anc_update = anc_neighbors[anc]
             neighbor_time += time.time() - start
 
             # Check if the ancestor is in the same subgraph with the node in the previous round before we add the edge
@@ -191,12 +141,14 @@ def newupdate(label_dict, adict, ddict, edge, samples):
             new_label_dict[1][node][1] = new_label_dict[1][node][1].union(new_label_dict[1][edge[1]][1])
             if new_label_dict[1][node] != label_dict[1][node]:
                 changed_nodes.add(node)
-    
+
     num_labelchanged = 0
     changed_nodes_copy = changed_nodes.copy()
     num_labelchanged += len(changed_nodes_copy)
-    print("Number of nodes changed in layer 1 : ", num_labelchanged) #changed_nodes_copy)
+    total_changed = set()
+    total_changed.update(changed_nodes_copy)
     changed_nodes_copy = edge_nodes
+    total_changed.update(changed_nodes_copy)
 
     changed_nodes = set() 
     completed_samples = samples[1]
@@ -206,54 +158,34 @@ def newupdate(label_dict, adict, ddict, edge, samples):
     for i in range(2, len(samples)):
         neighbor_time += layer(changed_nodes_copy, completed_samples, i, new_adict, new_ddict, label_dict, new_label_dict, changed_nodes)
         changed_nodes_copy = changed_nodes.copy().union(changed_nodes_copy).difference(completed_samples)
-        num_labelchanged += len(changed_nodes)
-        print("Number of nodes changed in layer", i, ": ", len(changed_nodes)) #changed_nodes)
+        total_changed.update(changed_nodes_copy)
         changed_nodes = set() 
         completed_samples = completed_samples.union(samples[i])
     print("Neighbor time: ", neighbor_time)
 
-    print("Number of label changes: ", num_labelchanged)
+    print("Number of node changes: ", len(total_changed))
                     
     # for key in new_label_dict.keys():
     #     print(new_label_dict[key])
     return new_label_dict
         
-def allneighbors(nodes,adict,ddict):
-    neighbors = defaultdict(list)
-    for node in nodes:
-        anc = set()
-        dec = set()
-        anc.add(node)
-        dec.add(node)
-        wait = set()
-        wait.add(node)
-        while len(wait) > 0:
-            for n in adict[wait.pop()]:
-                anc.add(n)
-                wait.add(n)
-        wait.add(node)
-        while len(wait) > 0:
-            for n in ddict[wait.pop()]:
-                dec.add(n)
-                wait.add(n)
-        neighbors[node] = [anc,dec]
-    return neighbors
-
 def neighbor(node, dict, new_label, r, samples):
     neigh = set()
     neigh.add(node)
     wait = set()
     wait.add(node)
-    while len(wait) > 0:
-        for n in dict[wait.pop()]:
-            if r == 0:
+    if r == 0:
+        while len(wait) > 0:
+            for n in dict[wait.pop()]:
                 neigh.add(n)
                 wait.add(n)
-            else:
-                if n not in samples:
-                    if new_label[r][node] == new_label[r][n]:
-                        neigh.add(n)
-                        wait.add(n)
+        return neigh
+    while len(wait) > 0:
+        for n in dict[wait.pop()]:
+            if n not in samples:
+                if new_label[r][node] == new_label[r][n]:
+                    neigh.add(n)
+                    wait.add(n)
     return neigh
 
     
@@ -289,7 +221,8 @@ for i in range(n//2-1):
     edges.append((i, i+1))
 for i in range(n//2, n-1):
     edges.append((i, i+1))
-origin_round = {}
+origin_round = []
+origin_round.append([])
 
 adict, ddict = labeldict(edges)
 samples_round = newsample(nodes)

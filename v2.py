@@ -142,7 +142,7 @@ def test(nodes, adict, ddict, out, samples_round, trials, labels_round):
             label_time += time.time()-start
             if out == True:
                 print("labels :", combined)
-            labels_round[i] = combined
+            labels_round.append(combined)
             start = time.time()
             subgraphs = graphs
             partition_time += time.time()-start
@@ -179,19 +179,21 @@ def test(nodes, adict, ddict, out, samples_round, trials, labels_round):
 # # print("labels_round :", labels_round)
 # print("#################################################")
 
-# n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
-# nodes, edges = graph('line', n) #line, perfect
-# adict, ddict = labeldict(edges)
-# samples_round = newsample(nodes)
-# labels_round = {}
-# samples_round[0] = set()
-# samples_round[1] = set([0, 7])
-# samples_round[2] = set([1,4,5,6])
-# samples_round[3] = set([2,3])
+n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+nodes, edges = graph('line', n) #line, perfect
+adict, ddict = labeldict(edges)
+samples_round = newsample(nodes)
+labels_round = []
+labels_round.append([])
+samples_round[0] = set()
+samples_round[1] = set([0, 7])
+samples_round[2] = set([1,4,5,6])
+samples_round[3] = set([2,3])
 
-# print("sample :", samples_round)
-# test(nodes, adict, ddict, True, samples_round, 1, labels_round)
-# print("labels_round :", labels_round)
+print("sample :", samples_round)
+test(nodes, adict, ddict, True, samples_round, 1, labels_round)
+print("labels_round :", labels_round)
+
 
 
 
