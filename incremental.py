@@ -103,18 +103,7 @@ def layer(changed_nodes_copy,  completed_samples, r, new_adict, new_ddict, label
 
                         find_changed_node(node, new_label_dict, label_dict, r, changed_nodes)
                         find_changed_node(dec_neighbor, new_label_dict, label_dict, r, changed_nodes)
-                # else:
-                #     # In this case, the subgraph remains unchanged but the incremental edge is not affecting the labels yet
-                #     for dec_neighbor in dec_update:
-                #         # We will need to add the node's ancestor label to all its descendants in case the node has a different label
-                #         new_label_dict[r][dec_neighbor] = (set(new_label_dict[r][dec_neighbor][0]).union(set(new_label_dict[r][node][0])), new_label_dict[r][dec_neighbor][1])
-
-                #         # For each neighbor, we will need to take its decendants and add them to the node's decendants
-                #         new_label_dict[r][node] = (new_label_dict[r][node][0], set(new_label_dict[r][node][1]).union(set(new_label_dict[r][dec_neighbor][1])))
-
-                #         find_changed_node(node, new_label_dict, label_dict, r, changed_nodes)
-                #         find_changed_node(dec_neighbor, new_label_dict, label_dict, r, changed_nodes)
-        
+                        
         for anc in ancestor_list:
             # Getting all the ancestors of the node excluding sampled nodes
             start = time.time()
@@ -156,17 +145,6 @@ def layer(changed_nodes_copy,  completed_samples, r, new_adict, new_ddict, label
 
                         find_changed_node(node, new_label_dict, label_dict, r, changed_nodes)
                         find_changed_node(anc_neighbor, new_label_dict, label_dict, r, changed_nodes)
-                # else:
-                #     # In this case, the subgraph remains unchanged but the incremental edge is not affecting the labels yet
-                #     for anc_neighbor in anc_update:
-                #         # We will need to add the node's descendant label to all its ancestors in case the node has a different label
-                #         new_label_dict[r][anc_neighbor] = (new_label_dict[r][anc_neighbor][0], set(new_label_dict[r][anc_neighbor][1]).union(set(new_label_dict[r][node][1])))
-
-                #         # For each neighbor, we will need to take its ancestors and add them to the node's ancestors
-                #         new_label_dict[r][node] = (set(new_label_dict[r][node][0]).union(set(new_label_dict[r][anc_neighbor][0])), new_label_dict[r][node][1])
-
-                #         find_changed_node(node, new_label_dict, label_dict, r, changed_nodes)
-                #         find_changed_node(anc_neighbor, new_label_dict, label_dict, r, changed_nodes)
     return neighbor_time
 
 def find_changed_node(node, new_label_dict, label_dict, r, changed_nodes):
