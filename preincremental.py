@@ -4,12 +4,14 @@ import time
 import pickle
 from collections import defaultdict
 
-from sklearn.semi_supervised import LabelSpreading
 
+### 生成每轮的sample, sample_rate --> sample --> newsample ###
+# 设置sample rate
 def sample_rate(power, n):
     sample_p = (math.log(n))**power/n
     return sample_p
 
+# 从nodes中随机抽取sample的节点
 def sample(nodes, sample_p):
     S = set()
     for node in nodes:
@@ -18,6 +20,7 @@ def sample(nodes, sample_p):
             S.add(node)
     return S
 
+# 生成每一轮的sample
 def newsample(nodes):
     samples_round = {}
     r = 1
@@ -29,6 +32,8 @@ def newsample(nodes):
         r += 1
     return samples_round
 
+### 生成每轮的label, label_rate --> label --> newlabel ###
+# 通过edge为每个node找到直接连接的ancestor和descendant
 def labeldict(edges):
     adict = defaultdict(set)
     ddict = defaultdict(set)
@@ -37,11 +42,11 @@ def labeldict(edges):
         ddict[edge[1]].add(edge[0])
     return adict, ddict
 
+# 生成每个node的ancestor和descendant label
 def labeling(nodes, samples, r, adict, ddict):
     ancestors = {}
     descendants = {}
     tempdict = {}
-    # O(V)
     for node in nodes:
         ancestors[node] = []
         descendants[node] = []
@@ -62,13 +67,15 @@ def labeling(nodes, samples, r, adict, ddict):
             notvisit_des.update(tempdict[node][1])
     return ancestors, descendants
 
+# 合并label： 取ancestor dictionary和descendant dictionary的交集作为combined dictionary
 def label(ancestors, descendants, samples):
     keys = set(ancestors.keys()) - samples
     combined = {}
     for key in keys:
-        combined[key] = [set(ancestors[key]), set(descendants[key])]
+        combined[key] = [set(ancestors[key]), set(descendants[key])] #combined dictionary 的格式
     return combined
 
+# 根据label做partition
 def partition(combined):
     part_dict = defaultdict(set)
     parts = list(combined.items())
@@ -78,6 +85,7 @@ def partition(combined):
     subgraphs = [set(part) for part in part_dict.values()]
     return subgraphs
 
+# 生成图，目前仅包含line和perfect binary tree
 def graph(types, n):
     if types == 'line':
         nodes = set(range(n))
@@ -112,10 +120,11 @@ def test(nodes, adict, ddict, out, samples_round, trials, labels_round):
     label_time = 0
     partition_time = 0 
     total_time = 0
+    # trials 仅为测试平均速度用
     for i in range(trials):
         begin = time.time()
         i = 1
-        subgraphs = [nodes]
+        subgraphs = [nodes] #初始化subgraphs，所有node为一个subgraph
         while len(subgraphs) > 0:
             if out == True:
                 print("Round", i, ":", subgraphs)
@@ -124,27 +133,27 @@ def test(nodes, adict, ddict, out, samples_round, trials, labels_round):
             graphs = []
             for subgraph in subgraphs:
                 start = time.time()
-                anc, des = labeling(subgraph, samples_round, i, adict, ddict)
+                anc, des = labeling(subgraph, samples_round, i, adict, ddict) #创建 subgraph的 ancestor和descendant dictionary
                 label_time += time.time()-start
                 start = time.time()
-                combined = label(anc, des, samples_round[i])
+                combined = label(anc, des, samples_round[i]) #合并 subgraph 的ancestor和descendant dictionary
                 label_time += time.time()-start
                 start = time.time()
-                graph = partition(combined)
-                graphs.extend(graph)
-                partition_time += time.time()-start
+                graph = partition(combined) #根据label做partition
+                graphs.extend(graph) #将partition后的subgraph加入subgraphs
+                partition_time += time.time()-start 
                 start = time.time()
-                ancestors.update(anc)
-                descendants.update(des)
+                ancestors.update(anc) #更新 subgraphs 的ancestor dictionary
+                descendants.update(des) #更新 subgraphs 的descendant dictionary
                 label_time += time.time()-start
             start = time.time()
-            combined = label(ancestors, descendants, samples_round[i-1])
+            combined = label(ancestors, descendants, samples_round[i-1]) #合并 subgraphs 的ancestor和descendant dictionary
             label_time += time.time()-start
             if out == True:
                 print("labels :", combined)
-            labels_round.append(combined)
+            labels_round.append(combined) #将labels加入输出的labels_round
             start = time.time()
-            subgraphs = graphs
+            subgraphs = graphs #更新subgraphs
             partition_time += time.time()-start
             i += 1
         total_time += time.time()-begin
@@ -152,6 +161,7 @@ def test(nodes, adict, ddict, out, samples_round, trials, labels_round):
     print("partition_time:", partition_time/trials)
     print("total_time:", total_time/trials)
 
+<<<<<<< Updated upstream:v2.py
 #### Testing Block ####
 # n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
 # # nodes, edges = graph('line', n) #line, perfect
@@ -170,10 +180,54 @@ def test(nodes, adict, ddict, out, samples_round, trials, labels_round):
 
 # adict, ddict = labeldict(edges)
 # samples_round = newsample(nodes)
+=======
+#### 测试 ####
+
+################################################################################################
+### 测试8个节点的正确性 ###
+# # n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071 设置节点数
+# # # nodes, edges = graph('line', n) #line, perfect 设置图类型
+# # nodes = set(range(n)) #设置节点
+# # edges = [(0,1),(1,2),(2,3),(4,5),(5,6),(6,7)] #设置边 仅用于8个节点line graph
+# # labels_round = {}
+
+# # #载入存储的图
+# # # with open('perfect_graph.txt', 'w') as f:
+# # #     f.write(str(nodes))
+# # #     f.write('\n')
+# # #     f.write(str(edges))
+# # # with open('line_graph100000.txt') as f:
+# # #     nodes_line = f.readline()
+# # #     nodes = eval(nodes_line)
+# # #     edges_line = f.readline()
+# # #     edges = eval(edges_line)
+
+# # adict, ddict = labeldict(edges)
+# # samples_round = newsample(nodes)
+# # samples_round[0] = set()
+# # samples_round[1] = set([0, 7])
+# # samples_round[2] = set([1,4,5,6])
+# # samples_round[3] = set([2,3])
+# # print("sample :", samples_round)
+# # test(adict, ddict, True, samples_round, 1, labels_round)
+# # # print("labels_round :", labels_round)
+# # print("#################################################")
+################################################################################################
+
+################################################################################################
+# ### 测试若干节点的速度 ###
+# n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+# nodes, edges = graph('line', n) #line, perfect
+# adict, ddict = labeldict(edges)
+# samples_round = newsample(nodes)
+# labels_round = []
+# labels_round.append([])
+>>>>>>> Stashed changes:preincremental.py
 # samples_round[0] = set()
 # samples_round[1] = set([0, 7])
 # samples_round[2] = set([1,4,5,6])
 # samples_round[3] = set([2,3])
+<<<<<<< Updated upstream:v2.py
 # print("sample :", samples_round)
 # test(adict, ddict, True, samples_round, 1, labels_round)
 # # print("labels_round :", labels_round)
@@ -194,6 +248,13 @@ print("sample :", samples_round)
 test(nodes, adict, ddict, True, samples_round, 1, labels_round)
 print("labels_round :", labels_round)
 
+=======
+
+# print("sample :", samples_round)
+# test(nodes, adict, ddict, True, samples_round, 1, labels_round)
+# print("labels_round :", labels_round)
+################################################################################################
+>>>>>>> Stashed changes:preincremental.py
 
 
 

@@ -1,6 +1,7 @@
-from v2 import *
+from preincremental import *
 import copy
 
+# 重新根据 第i轮 的旧label和新label 生成 第i+1轮 的新label
 def layer(changed_nodes_copy,  completed_samples, r, new_adict, new_ddict, label_dict, new_label_dict, changed_nodes):
     neighbor_time = 0
     dec_neighbors = defaultdict(list)
@@ -97,10 +98,12 @@ def layer(changed_nodes_copy,  completed_samples, r, new_adict, new_ddict, label
                         find_changed_node(anc_neighbor, new_label_dict, label_dict, r, changed_nodes)
     return neighbor_time
 
+# 找到所有改变的节点
 def find_changed_node(node, new_label_dict, label_dict, r, changed_nodes):
     if new_label_dict[r][node] != label_dict[r][node]:
         changed_nodes.add(node)
 
+# 
 def newupdate(label_dict, adict, ddict, edge, samples):
     new_adict = adict.copy()
     new_ddict = ddict.copy()
@@ -167,8 +170,14 @@ def newupdate(label_dict, adict, ddict, edge, samples):
                     
     # for key in new_label_dict.keys():
     #     print(new_label_dict[key])
+<<<<<<< Updated upstream
     return new_label_dict
         
+=======
+    return new_label_dict, len(total_changed)
+
+# 找到节点的所有anc/dec
+>>>>>>> Stashed changes
 def neighbor(node, dict, new_label, r, samples):
     neigh = set()
     neigh.add(node)
@@ -188,8 +197,11 @@ def neighbor(node, dict, new_label, r, samples):
                     wait.add(n)
     return neigh
 
-    
-### DEBUGGING/CORRECTNESS BLOCK ###
+
+
+#### 测试 ####
+################################################################################################  
+### 仅用8个节点来测试正确性 ###
 # n = 8 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
 # nodes = set(range(n))
 # edges = [(0,3),(1,2),(2,3),(4,6),(5,6),(6,7)]  #(1,2),(4,6),(5,6),(6,7)
@@ -212,7 +224,9 @@ def neighbor(node, dict, new_label, r, samples):
 #     print("Sample", i, ":", samples_round[i])
 #     print("Origin Round", i, ":", origin_round[i])
 #     print("New round", i, ":", new_label[i])
+################################################################################################
 
+<<<<<<< Updated upstream
 ### TESTING BLOCK
 n = 10000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
 nodes = set(range(n))
@@ -223,6 +237,20 @@ for i in range(n//2, n-1):
     edges.append((i, i+1))
 origin_round = []
 origin_round.append([])
+=======
+
+################################################################################################
+### 按顺序加边，测试时间 ###
+# n = 10000 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+# nodes = set(range(n))
+# edges = []
+# for i in range(n//2-1):
+#     edges.append((i, i+1))
+# for i in range(n//2, n-1):
+#     edges.append((i, i+1))
+# origin_round = []
+# origin_round.append([])
+>>>>>>> Stashed changes
 
 adict, ddict = labeldict(edges)
 samples_round = newsample(nodes)
@@ -231,8 +259,12 @@ for round in range(1, len(samples_round)):
     print("Round", round, ":", len(samples_round[round]))
 test(nodes, adict, ddict, False, samples_round, 1, origin_round)
 
+<<<<<<< Updated upstream
 
 edge = (n//2-1, n//2)
+=======
+# edge = (n//2-1, n//2)
+>>>>>>> Stashed changes
 
 start = time.time()
 new_label = newupdate(origin_round, adict, ddict, edge, samples_round)
@@ -251,3 +283,38 @@ print("Update time :", end-start)
 #     print("Sample", i, ":", samples_round[i])
 #     print("Origin Round", i, ":", origin_round[i])
 #     print("New round", i, ":", new_label[i])
+<<<<<<< Updated upstream
+=======
+################################################################################################
+
+
+################################################################################################
+### 随机增加edge, 且生成csv file ###
+n = 150 #1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071
+nodes = set(range(n))
+wait_edges = []
+for i in range(n-1):
+    wait_edges.append((i, i+1))
+
+starttime = time.time()
+edges = []
+incremental_round = []
+incremental_round.append([])
+adict, ddict = labeldict(edges)
+samples_round = newsample(nodes)
+samples_round[0] = set()
+num_nodes_changed = 0
+
+test(nodes, adict, ddict, False, samples_round, 1, incremental_round)
+
+# df = pd.DataFrame(columns=['Edge', 'Number of nodes changed', 'Incremental round'])
+
+while len(wait_edges) > 0:
+    edge = wait_edges.pop(random.randrange(len(wait_edges)))
+    incremental_round, num_nodes_changed = newupdate(incremental_round, adict, ddict, edge, samples_round)
+    # df.loc[len(df.index)] = [edge, num_nodes_changed, incremental_round] 
+
+print("total time:", time.time()-starttime)
+# df.to_csv('incremental.csv', index=False)
+################################################################################################
+>>>>>>> Stashed changes
